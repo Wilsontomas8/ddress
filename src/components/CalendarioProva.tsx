@@ -8,7 +8,7 @@
  * nunca decide sozinho o que está disponível.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DIAS_SEMANA, MESES, parseDay } from "@/lib/dates";
 import { momentoDaProva } from "@/lib/expiracao";
 
@@ -47,13 +47,18 @@ export default function CalendarioProva({ variantId, valor, onChange, legenda, l
   const [erro, setErro] = useState<string | null>(null);
   const [desde, setDesde] = useState<string | null>(null);
   const [diaAberto, setDiaAberto] = useState<string | null>(null);
+  // Só a resposta do pedido mais recente conta: ao trocar depressa de
+  // tamanho, a agenda da peça anterior pode chegar depois da nova.
+  const ultimoPedido = useRef(0);
 
   const carregar = useCallback(
     async (inicio: string | null, manterDiaEscolhido = true) => {
       if (!variantId) {
+        ultimoPedido.current++;
         setDados(null);
         return;
       }
+      const este = ++ultimoPedido.current;
       setACarregar(true);
       setErro(null);
       try {
@@ -63,6 +68,7 @@ export default function CalendarioProva({ variantId, valor, onChange, legenda, l
         const r = await fetch(url.toString());
         if (!r.ok) throw new Error("Não foi possível carregar o calendário.");
         const json: Resposta = await r.json();
+        if (este !== ultimoPedido.current) return;
         setDados(json);
         const primeiro = json.dias.find((d) => d.aberto);
         setDiaAberto((atual) =>
@@ -71,9 +77,10 @@ export default function CalendarioProva({ variantId, valor, onChange, legenda, l
             : (primeiro?.data ?? null)
         );
       } catch (e) {
+        if (este !== ultimoPedido.current) return;
         setErro(e instanceof Error ? e.message : "Erro ao carregar o calendário.");
       } finally {
-        setACarregar(false);
+        if (este === ultimoPedido.current) setACarregar(false);
       }
     },
     [variantId]

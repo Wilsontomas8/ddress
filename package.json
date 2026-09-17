@@ -19,7 +19,11 @@
     "imagens": "node scripts/gerar-imagens.mjs",
     "e2e:perfis": "node scripts/e2e-perfis.mjs",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "e2e": "node scripts/e2e-perfis.mjs && node scripts/e2e-cliente.mjs && node scripts/e2e-painel.mjs",
+    "capturas": "node scripts/capturas.mjs",
+    "vercel-build": "tsx src/db/implantar.ts && next build",
+    "db:implantar": "tsx src/db/implantar.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

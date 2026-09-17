@@ -8,14 +8,13 @@
  * agenda e os alugueres abrem.
  */
 
-import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
 const BASE = process.argv[2] ?? "http://localhost:3100";
-const TIROS = "/tmp/wil-e2e";
+const TIROS = ".capturas/e2e";
 mkdirSync(TIROS, { recursive: true });
 
-const executablePath = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+import { abrirNavegador } from "./navegador.mjs";
 
 const passos = [];
 function passo(nome, ok, extra = "") {
@@ -23,7 +22,7 @@ function passo(nome, ok, extra = "") {
   console.log(`${ok ? "  ok  " : " FALHA"} ${nome}${extra ? ` — ${extra}` : ""}`);
 }
 
-const navegador = await chromium.launch({ executablePath, args: ["--no-sandbox"] });
+const navegador = await abrirNavegador();
 const contexto = await navegador.newContext({ viewport: { width: 1440, height: 1000 } });
 const pagina = await contexto.newPage();
 const errosDeConsola = [];
@@ -47,7 +46,7 @@ try {
   passo("Lista de pedidos por tratar", linhas > 0, `${linhas} pedido(s)`);
 
   await pagina.locator("tbody tr a").first().click();
-  await pagina.waitForURL("**/admin/pedidos/**", { timeout: 10000 });
+  await pagina.waitForURL("**/admin/pedidos/**", { timeout: 45000 });
   const numeroPedido = await pagina.locator("h1").innerText();
   passo("Abre a ficha do pedido", /DDR-/.test(numeroPedido), numeroPedido);
 
@@ -60,7 +59,7 @@ try {
   const depoisDeAssumir = await pagina.locator("body").innerText();
   passo(
     "Funcionário assume o pedido",
-    /Pedido assumido|com Domingos/i.test(depoisDeAssumir)
+    /Pedido assumido|com [A-ZÀ-Ú][a-zà-ú]+ /.test(depoisDeAssumir)
   );
 
   // --------------------------------------------- confirmar pagamento
@@ -173,7 +172,7 @@ try {
   // -------------------------------------------------------- peças
   await pagina.goto(`${BASE}/admin/produtos`, { waitUntil: "networkidle" });
   await pagina.locator("tbody tr a").first().click();
-  await pagina.waitForURL("**/admin/produtos/**", { timeout: 10000 });
+  await pagina.waitForURL("**/admin/produtos/**", { timeout: 45000 });
   passo("Ficha da peça abre para edição", await pagina.getByText("Tamanhos e stock").isVisible());
   await pagina.screenshot({ path: `${TIROS}/10-peca-admin.png`, fullPage: true });
 

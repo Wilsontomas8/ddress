@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { getPedidoPorNumero } from "@/lib/pedidos";
 import { getSettings } from "@/lib/settings";
 import { formatKz } from "@/lib/money";
-import { formatNumericDate } from "@/lib/dates";
+import { formatDateTime, formatNumericDate } from "@/lib/dates";
+import { avaliarReserva } from "@/lib/expiracao";
 import { ESTADO_PAGAMENTO, ESTADO_PEDIDO, METODO_PAGAMENTO, RESIDENCIA } from "@/lib/labels";
 import LinhaDoTempo from "@/components/LinhaDoTempo";
 import { passosDoPedido } from "@/lib/acompanhamento";
@@ -32,6 +33,23 @@ export default async function PaginaPedido({
   const temAluguer = itens.some((i) => i.kind === "ALUGUER");
   const pago = pedido.paymentStatus === "PAGO";
 
+  // Reserva de aluguer ainda sem prova: dizer até quando tem de acontecer.
+  const inicios = itens.filter((i) => i.kind === "ALUGUER" && i.startDate).map((i) => i.startDate!.getTime());
+  const reserva = inicios.length
+    ? avaliarReserva(
+        {
+          estadoDoPedido: pedido.status,
+          exigeProva: pedido.needsFitting,
+          provaDispensada: pedido.fittingWaived,
+          levantamento: new Date(Math.min(...inicios)),
+          provas: marcacoes.map((m) => ({ data: m.date, hora: m.startTime, status: m.status })),
+        },
+        new Date(),
+        loja.reservationExpiryHours
+      )
+    : null;
+  const avisoDeProva = reserva?.sujeita && !reserva.temProvaValida && !reserva.expirada ? reserva : null;
+
   const passos = passosDoPedido({
     status: pedido.status,
     temAluguer,
@@ -55,6 +73,18 @@ export default async function PaginaPedido({
           <span className={`selo ${estado.cor}`}>{estado.label}</span>
           <span className={`selo ${pagamento.cor}`}>{pagamento.label}</span>
         </div>
+
+        {avisoDeProva && (
+          <div className="mt-6 border-l-2 border-rubi bg-marfim-100 px-4 py-3 text-sm text-tinta-70" role="status">
+            <p className="font-medium text-tinta">Marque a prova até {formatDateTime(avisoDeProva.limite)}.</p>
+            <p className="mt-1">
+              Sem prova até lá, a reserva expira e a peça volta a ficar disponível para outros clientes.{" "}
+              <Link href="/marcacao" className="ligacao">
+                Marcar prova
+              </Link>
+            </p>
+          </div>
+        )}
 
         {/* --------------------------------------------- acompanhamento */}
         <div className="mt-8 border-t border-marfim-200 pt-6">

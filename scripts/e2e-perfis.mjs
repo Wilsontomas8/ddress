@@ -8,14 +8,13 @@
  * não abre.
  */
 
-import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
 const BASE = process.argv[2] ?? "http://localhost:3100";
-const TIROS = "/tmp/ddress-e2e";
+const TIROS = ".capturas/e2e";
 mkdirSync(TIROS, { recursive: true });
 
-const executablePath = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+import { abrirNavegador } from "./navegador.mjs";
 
 const PERFIS = [
   {
@@ -78,7 +77,7 @@ function passo(nome, ok, extra = "") {
   console.log(`${ok ? "  ok  " : " FALHA"} ${nome}${extra ? ` — ${extra}` : ""}`);
 }
 
-const navegador = await chromium.launch({ executablePath, args: ["--no-sandbox"] });
+const navegador = await abrirNavegador();
 
 try {
   for (const perfil of PERFIS) {

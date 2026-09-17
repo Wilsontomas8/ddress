@@ -407,7 +407,23 @@ const PRODUTOS: DefProduto[] = [
 
 // ------------------------------------------------------------------ run
 
-export async function semear(db: BaseDeDados, avisar: (m: string) => void = console.log) {
+export type OpcoesDaSemente = {
+  /**
+   * "demonstracao": contas com as palavras-passe do README (base local).
+   * "publica": base real acessível na Internet — as contas de demonstração
+   * ficam com palavras-passe aleatórias (ninguém entra com elas) e o
+   * administrador usa o e-mail da loja com a palavra-passe indicada.
+   */
+  modo?: "demonstracao" | "publica";
+  senhaAdministrador?: string;
+};
+
+export async function semear(
+  db: BaseDeDados,
+  avisar: (m: string) => void = console.log,
+  opcoes: OpcoesDaSemente = {}
+) {
+  const publica = opcoes.modo === "publica";
   avisar("A limpar as tabelas...");
   await db.execute(sql`
     TRUNCATE TABLE
@@ -425,7 +441,7 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
     tagline: "Aluguer e venda de vestidos",
     phone: "+244 923 000 111",
     whatsapp: "+244 923 000 111",
-    email: "",
+    email: "atendimentoddress@gmail.com",
     address: "Rua Amílcar Cabral, 120 — Ingombota, Luanda",
     bankName: "Banco BAI",
     accountHolder: "DDRESS — Aluguer e Venda de Vestidos, Lda.",
@@ -444,7 +460,9 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
 
   // ------------------------------------------------------------ pessoas
   avisar("Contas de acesso...");
-  const hash = (p: string) => bcrypt.hashSync(p, 10);
+  const aleatoria = () => crypto.randomUUID() + crypto.randomUUID();
+  const hash = (p: string) => bcrypt.hashSync(publica ? aleatoria() : p, 10);
+  const hashAdministrador = bcrypt.hashSync(publica ? (opcoes.senhaAdministrador ?? aleatoria()) : "admin123", 10);
 
   const adminId = uid();
   const funcionarioId = uid();
@@ -459,9 +477,9 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
     {
       id: adminId,
       name: "Administrador DDRESS",
-      email: "admin@ddress.ao",
+      email: publica ? "atendimentoddress@gmail.com" : "admin@ddress.ao",
       phone: "+244 923 000 111",
-      passwordHash: hash("admin123"),
+      passwordHash: hashAdministrador,
       role: "ADMIN",
     },
     {
@@ -953,14 +971,18 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
   avisar("  Pronto.");
   avisar(`  ${totalProdutos} produtos, ${varianteIds.size} peças, ${historico.total} pedidos de histórico, 4 pedidos em curso, 2 marcações.`);
   avisar("");
-  avisar("  Contas de acesso:");
-  avisar("    Administrador   admin@ddress.ao       admin123");
-  avisar("    Funcionário     domingos@ddress.ao    funcionario123");
-  avisar("    Funcionária     ana@ddress.ao             funcionario123");
-  avisar("    Suporte         suporte@ddress.ao         suporte123");
-  avisar("    Contabilista    contabilidade@ddress.ao   conta123");
-  avisar("    Motorista       motorista@ddress.ao       motorista123");
-  avisar("    Cliente         cliente@exemplo.ao        cliente123");
+  if (publica) {
+    avisar("  Administrador: atendimentoddress@gmail.com (palavra-passe definida em DDRESS_SENHA_ADMIN).");
+  } else {
+    avisar("  Contas de acesso:");
+    avisar("    Administrador   admin@ddress.ao       admin123");
+    avisar("    Funcionário     domingos@ddress.ao    funcionario123");
+    avisar("    Funcionária     ana@ddress.ao             funcionario123");
+    avisar("    Suporte         suporte@ddress.ao         suporte123");
+    avisar("    Contabilista    contabilidade@ddress.ao   conta123");
+    avisar("    Motorista       motorista@ddress.ao       motorista123");
+    avisar("    Cliente         cliente@exemplo.ao        cliente123");
+  }
   avisar("");
 }
 

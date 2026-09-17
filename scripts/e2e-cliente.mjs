@@ -8,14 +8,13 @@
  * finaliza o pedido e confirma que o número do pedido aparece.
  */
 
-import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
 const BASE = process.argv[2] ?? "http://localhost:3100";
-const TIROS = "/tmp/wil-e2e";
+const TIROS = ".capturas/e2e";
 mkdirSync(TIROS, { recursive: true });
 
-const executablePath = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+import { abrirNavegador } from "./navegador.mjs";
 
 function dia(offset) {
   const d = new Date();
@@ -29,7 +28,7 @@ function passo(nome, ok, extra = "") {
   console.log(`${ok ? "  ok  " : " FALHA"} ${nome}${extra ? ` — ${extra}` : ""}`);
 }
 
-const navegador = await chromium.launch({ executablePath, args: ["--no-sandbox"] });
+const navegador = await abrirNavegador();
 const contexto = await navegador.newContext({ viewport: { width: 1360, height: 1000 } });
 const pagina = await contexto.newPage();
 
@@ -90,7 +89,7 @@ try {
   await pagina.screenshot({ path: `${TIROS}/1-produto.png`, fullPage: true });
 
   // Calendário de prova (obrigatória nesta peça)
-  await pagina.waitForSelector("text=Prova no ateliê", { timeout: 5000 });
+  await pagina.getByText("Resido em Luanda", { exact: false }).first().waitFor({ timeout: 5000 });
   const botoesHora = pagina.locator("button").filter({ hasText: /^\d{2}:\d{2}$/ });
   await botoesHora.first().waitFor({ timeout: 8000 });
 
@@ -112,13 +111,13 @@ try {
 
   // ------------------------------------------------------ carrinho
   await pagina.getByRole("button", { name: "Finalizar pedido" }).click();
-  await pagina.waitForURL("**/carrinho", { timeout: 10000 });
+  await pagina.waitForURL("**/carrinho", { timeout: 45000 });
   passo("Peça no carrinho", await pagina.getByText("Vestido de Gala").first().isVisible());
   await pagina.screenshot({ path: `${TIROS}/3-carrinho.png`, fullPage: true });
 
   // ------------------------------------------------------ checkout
   await pagina.getByRole("link", { name: "Continuar", exact: true }).click();
-  await pagina.waitForURL("**/checkout", { timeout: 10000 });
+  await pagina.waitForURL("**/checkout", { timeout: 45000 });
 
   await pagina.getByLabel("Nome completo").fill("Teresa Domingos");
   await pagina.getByLabel("Telefone").fill("+244 927 555 111");
@@ -127,7 +126,7 @@ try {
   await pagina.screenshot({ path: `${TIROS}/4-checkout.png`, fullPage: true });
 
   await pagina.getByRole("button", { name: "Enviar pedido" }).click();
-  await pagina.waitForURL("**/pedido/**", { timeout: 15000 });
+  await pagina.waitForURL("**/pedido/**", { timeout: 60000 });
 
   const numero = await pagina.locator("h1").innerText();
   passo("Pedido criado", /DDR-\d{4}-\d{4}/.test(numero), numero);

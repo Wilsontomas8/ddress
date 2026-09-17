@@ -8,7 +8,7 @@
  *    mesmas consultas, regras e migrações da produção.
  */
 
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync } from "node:fs";
 import path from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle as drizzlePg, type NodePgDatabase } from "drizzle-orm/node-postgres";
@@ -21,17 +21,51 @@ export type BaseDeDados = NodePgDatabase<typeof schema>;
 type Ligacao = {
   db: BaseDeDados;
   embutida: boolean;
+  pasta: string | null;
   fechar: () => Promise<void>;
 };
 
-const PASTA_EMBUTIDA_PADRAO = ".dados/pglite";
+// Na Vercel o disco é só de leitura, excepto /tmp: a base de demonstração
+// vive lá e é recriada a cada arranque a frio.
+const PASTA_EMBUTIDA_PADRAO = process.env.VERCEL ? "/tmp/ddress-pglite" : ".dados/pglite";
 
-export function ehBaseEmbutida(url = process.env.DATABASE_URL): boolean {
+/**
+ * Endereço da base de dados. Aceita DATABASE_URL e, na Vercel com a
+ * integração do Supabase, POSTGRES_URL (ligação pelo pooler).
+ */
+export function urlDaBase(): string | undefined {
+  return process.env.DATABASE_URL || process.env.POSTGRES_URL || undefined;
+}
+
+/** Para migrações convém a ligação directa, sem pooler, quando existe. */
+export function urlDeMigracao(): string | undefined {
+  return process.env.DATABASE_URL_DIRECT || process.env.POSTGRES_URL_NON_POOLING || urlDaBase();
+}
+
+export function ehBaseEmbutida(url = urlDaBase()): boolean {
   return !url || url.startsWith("pglite:");
 }
 
+/**
+ * Pool para PostgreSQL gerido. O parâmetro sslmode da URL sobrepõe-se às
+ * opções do node-postgres e obriga a validar o certificado do pooler do
+ * Supabase, que não é de uma autoridade pública: tira-se da URL e liga-se
+ * TLS explicitamente.
+ */
+export function criarPool(url: string, max = 10): Pool {
+  const local = /localhost|127\.0\.0\.1/.test(url);
+  const endereco = new URL(url);
+  endereco.searchParams.delete("sslmode");
+  endereco.searchParams.delete("supa");
+  return new Pool({
+    connectionString: endereco.toString(),
+    ssl: local ? false : { rejectUnauthorized: false },
+    max,
+  });
+}
+
 function criarLigacao(): Ligacao {
-  const url = process.env.DATABASE_URL;
+  const url = urlDaBase();
 
   if (ehBaseEmbutida(url)) {
     const pasta = path.resolve(url?.slice("pglite:".length) || PASTA_EMBUTIDA_PADRAO);
@@ -40,25 +74,52 @@ function criarLigacao(): Ligacao {
     // As APIs usadas (select, insert, transaction, execute) são as mesmas
     // nos dois controladores; o tipo comum evita ramificar o código todo.
     const db = drizzlePglite(cliente, { schema }) as unknown as BaseDeDados;
-    return { db, embutida: true, fechar: () => cliente.close() };
+    return { db, embutida: true, pasta, fechar: () => cliente.close() };
   }
 
-  const pool = new Pool({
-    connectionString: url,
-    // Serviços geridos (Neon, Supabase, Railway) exigem TLS.
-    ssl: /localhost|127\.0\.0\.1/.test(url!) ? false : { rejectUnauthorized: false },
-    max: 10,
-  });
-  return { db: drizzlePg(pool, { schema }), embutida: false, fechar: () => pool.end() };
+  // Em funções serverless cada instância abre poucas ligações.
+  const pool = criarPool(url!, process.env.VERCEL ? 3 : 10);
+  return { db: drizzlePg(pool, { schema }), embutida: false, pasta: null, fechar: () => pool.end() };
 }
 
 // Uma única ligação por processo: o Next.js carrega este módulo em várias
 // camadas (instrumentação, rotas, acções) e todas têm de partilhar a mesma.
 const global = globalThis as unknown as { __ddressLigacao?: Ligacao };
-const ligacao = global.__ddressLigacao ?? criarLigacao();
-global.__ddressLigacao = ligacao;
+global.__ddressLigacao ??= criarLigacao();
 
-export const db = ligacao.db;
-export const baseEmbutida = ligacao.embutida;
-export const fecharBaseDeDados = ligacao.fechar;
+const actual = () => global.__ddressLigacao!;
+
+/**
+ * `db` aponta sempre para a ligação actual, para que a base embutida possa
+ * ser recriada (ver recriarBaseEmbutida) sem reiniciar o servidor.
+ */
+export const db = new Proxy({} as BaseDeDados, {
+  get(_alvo, chave) {
+    const alvo = actual().db as unknown as Record<PropertyKey, unknown>;
+    const valor = Reflect.get(alvo, chave, alvo);
+    return typeof valor === "function" ? (valor as (...a: unknown[]) => unknown).bind(alvo) : valor;
+  },
+});
+
+export const baseEmbutida = actual().embutida;
+export const fecharBaseDeDados = () => actual().fechar();
+
+/**
+ * Só para a base embutida de demonstração: põe a pasta actual de parte
+ * (ex.: ficou danificada por o servidor ter sido parado à força) e abre
+ * uma base nova, vazia. Devolve onde ficou a cópia antiga.
+ */
+export async function recriarBaseEmbutida(): Promise<string | null> {
+  const ligacao = actual();
+  if (!ligacao.embutida || !ligacao.pasta) return null;
+  await ligacao.fechar().catch(() => {});
+  let copia: string | null = null;
+  if (existsSync(ligacao.pasta)) {
+    copia = `${ligacao.pasta}-danificada-${Date.now()}`;
+    renameSync(ligacao.pasta, copia);
+  }
+  global.__ddressLigacao = criarLigacao();
+  return copia;
+}
+
 export { schema };

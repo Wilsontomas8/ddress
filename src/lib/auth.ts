@@ -1,22 +1,34 @@
+import { createHmac } from "node:crypto";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { db } from "@/db";
+import { db, ehBaseEmbutida } from "@/db";
 import { users, type Role } from "@/db/schema";
 import { ehPerfilDeEquipa, podeVer, type Seccao } from "./permissoes";
 
 export const COOKIE_NAME = "wil_sessao";
 const DURACAO_DIAS = 30;
 
-// Só para desenvolvimento local e demonstração da Fase 1. Em produção o
-// AUTH_SECRET é obrigatório e este valor nunca é usado.
+// Só para desenvolvimento local e para a demonstração da Fase 1 (base
+// embutida, dados fictícios). Com uma base de dados real o AUTH_SECRET é
+// obrigatório e este valor nunca é usado.
 const SEGREDO_DE_DESENVOLVIMENTO = "ddress-desenvolvimento-local-nao-usar-em-producao";
 
+/**
+ * Segredo que assina as sessões, por ordem de preferência:
+ *  1. AUTH_SECRET;
+ *  2. derivado do SUPABASE_JWT_SECRET que a integração do Supabase cria na
+ *     Vercel (HMAC com um rótulo próprio: o segredo original não é usado
+ *     tal como está nem sai do servidor);
+ *  3. valor de desenvolvimento, só sem base de dados real.
+ */
 function segredo(): Uint8Array {
+  const supabase = process.env.SUPABASE_JWT_SECRET;
   const s =
     process.env.AUTH_SECRET ||
-    (process.env.NODE_ENV !== "production" ? SEGREDO_DE_DESENVOLVIMENTO : undefined);
+    (supabase ? createHmac("sha256", supabase).update("ddress-sessoes-v1").digest("base64") : undefined) ||
+    (process.env.NODE_ENV !== "production" || ehBaseEmbutida() ? SEGREDO_DE_DESENVOLVIMENTO : undefined);
   if (!s || s.length < 16) {
     throw new Error(
       "AUTH_SECRET em falta ou demasiado curto. Defina-o no ficheiro .env (openssl rand -base64 48)."

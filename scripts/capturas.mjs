@@ -10,7 +10,7 @@
  * instalados no sistema.
  */
 
-import { chromium } from "playwright";
+import { abrirNavegador } from "./navegador.mjs";
 import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
@@ -22,18 +22,6 @@ const LARGURAS = (process.env.LARGURAS ?? "390,768,1360").split(",").map(Number)
 
 mkdirSync(PASTA, { recursive: true });
 
-async function abrirNavegador() {
-  try {
-    return await chromium.launch();
-  } catch {
-    for (const channel of ["msedge", "chrome"]) {
-      try {
-        return await chromium.launch({ channel });
-      } catch {}
-    }
-    throw new Error("Nenhum navegador disponível para o Playwright.");
-  }
-}
 
 const navegador = await abrirNavegador();
 let falhas = 0;
