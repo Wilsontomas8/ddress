@@ -8,6 +8,8 @@ import { toISODay } from "@/lib/dates";
 import { getSettings } from "@/lib/settings";
 import { colecoesDoProduto, sugestoesDe } from "@/lib/conteudos";
 import EscolherSapatos from "@/components/EscolherSapatos";
+import FormularioEspera from "@/components/FormularioEspera";
+import { getUtilizador } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +29,21 @@ export default async function PaginaProduto({ params }: { params: Promise<{ slug
   if (!dados) notFound();
 
   const { produto, categoria, imagens, variantes } = dados;
-  const [loja, sapatosSugeridos, colecoes] = await Promise.all([
+  const [loja, sapatosSugeridos, colecoes, utilizador] = await Promise.all([
     getSettings(),
     sugestoesDe(produto.id),
     colecoesDoProduto(produto.id),
+    getUtilizador(),
   ]);
   const ehSapato = categoria.slug === "sapatos";
+
+  // Peça só para aluguer e sem nenhum tamanho livre: oferecemos o aviso
+  const ofereceAluguer = produto.offer !== "VENDA";
+  const comAluguer = variantes.filter((v) => v.rentalStock > 0);
+  const algumaLivre = comAluguer.some((v) => v.aluguer.disponivel);
+  const voltaEm = comAluguer.length
+    ? toISODay(comAluguer.reduce((cedo, v) => (v.aluguer.disponivelDe < cedo ? v.aluguer.disponivelDe : cedo), comAluguer[0].aluguer.disponivelDe))
+    : null;
 
   const relacionados = (
     await listarProdutos({ seccao: produto.section, categoriaSlug: categoria.slug, limite: 5 })
@@ -147,6 +158,21 @@ export default async function PaginaProduto({ params }: { params: Promise<{ slug
               }))}
             />
           </div>
+
+          {/* Toda alugada: a cliente pode pedir que a avisemos */}
+          {ofereceAluguer && !algumaLivre && (
+            <div className="mt-6 border-t border-marfim-200 pt-6">
+              <FormularioEspera
+                produtoId={produto.id}
+                disponivelDe={voltaEm}
+                cliente={
+                  utilizador
+                    ? { nome: utilizador.name, telefone: utilizador.phone ?? "", email: utilizador.email }
+                    : null
+                }
+              />
+            </div>
+          )}
 
           {produto.care && (
             <div className="mt-8 border-t border-marfim-200 pt-6">

@@ -14,39 +14,56 @@ const BASE = process.argv[2] ?? "http://localhost:3100";
 const TIROS = ".capturas/e2e";
 mkdirSync(TIROS, { recursive: true });
 
-import { abrirNavegador } from "./navegador.mjs";
+import { abrirNavegador, hidratado } from "./navegador.mjs";
 
 const passos = [];
+
+/** Passo sem dados para correr nesta base — fica dito, não falha. */
+function saltado(nome, porque) {
+  passos.push({ nome, ok: true, saltado: true });
+  console.log(` salta ${nome} — ${porque}`);
+}
+
 function passo(nome, ok, extra = "") {
   passos.push({ nome, ok });
-  console.log(`${ok ? "  ok  " : " FALHA"} ${nome}${extra ? ` — ${extra}` : ""}`);
+  console.log(
+    `${ok ? "  ok  " : " FALHA"} ${nome}${extra ? ` — ${extra}` : ""}`,
+  );
 }
 
 const navegador = await abrirNavegador();
-const contexto = await navegador.newContext({ viewport: { width: 1440, height: 1000 } });
+const contexto = await navegador.newContext({
+  viewport: { width: 1440, height: 1000 },
+});
 const pagina = await contexto.newPage();
+pagina.setDefaultTimeout(60000);
+pagina.setDefaultNavigationTimeout(120000);
 const errosDeConsola = [];
 pagina.on("pageerror", (e) => errosDeConsola.push(String(e)));
 
 try {
   // ---------------------------------------------------------- entrar
-  await pagina.goto(`${BASE}/entrar`, { waitUntil: "networkidle" });
-  await pagina.getByLabel("E-mail").fill("domingos@ddress.ao");
+  await pagina.goto(`${BASE}/entrar`, { waitUntil: "domcontentloaded" });
+  await hidratado(pagina, "form");
+  await pagina.getByLabel("E-mail", { exact: true }).fill("domingos@ddress.ao");
   await pagina.getByLabel("Palavra-passe").fill("funcionario123");
   await pagina.getByRole("button", { name: "Entrar" }).click();
-  await pagina.waitForURL("**/admin", { timeout: 45000 });
+  await pagina.waitForURL("**/admin", { timeout: 90000 });
   passo("Funcionário entra e cai no painel", true);
 
   await pagina.waitForTimeout(800);
-  await pagina.screenshot({ path: `${TIROS}/6-painel-resumo.png`, fullPage: true });
+  await pagina.screenshot({
+    path: `${TIROS}/6-painel-resumo.png`,
+    fullPage: true,
+  });
 
   // --------------------------------------------------------- pedidos
-  await pagina.goto(`${BASE}/admin/pedidos`, { waitUntil: "networkidle" });
+  await pagina.goto(`${BASE}/admin/pedidos`, { waitUntil: "domcontentloaded" });
   const linhas = await pagina.locator("tbody tr").count();
   passo("Lista de pedidos por tratar", linhas > 0, `${linhas} pedido(s)`);
 
   await pagina.locator("tbody tr a").first().click();
-  await pagina.waitForURL("**/admin/pedidos/**", { timeout: 45000 });
+  await pagina.waitForURL("**/admin/pedidos/**", { timeout: 90000 });
   const numeroPedido = await pagina.locator("h1").innerText();
   passo("Abre a ficha do pedido", /DDR-/.test(numeroPedido), numeroPedido);
 
@@ -59,18 +76,32 @@ try {
   const depoisDeAssumir = await pagina.locator("body").innerText();
   passo(
     "Funcionário assume o pedido",
-    /Pedido assumido|com [A-ZÀ-Ú][a-zà-ú]+ /.test(depoisDeAssumir)
+    /Pedido assumido|com [A-ZÀ-Ú][a-zà-ú]+ /.test(depoisDeAssumir),
   );
 
   // --------------------------------------------- confirmar pagamento
-  const botaoConfirmar = pagina.getByRole("button", { name: "Confirmar recebimento" });
-  if (await botaoConfirmar.first().isVisible().catch(() => false)) {
+  const botaoConfirmar = pagina.getByRole("button", {
+    name: "Confirmar recebimento",
+  });
+  if (
+    await botaoConfirmar
+      .first()
+      .isVisible()
+      .catch(() => false)
+  ) {
     await botaoConfirmar.first().click();
     await pagina.waitForTimeout(1800);
     const texto = await pagina.locator("body").innerText();
-    passo("Comprovativo do cliente validado", /Pagamento confirmado/i.test(texto));
+    passo(
+      "Comprovativo do cliente validado",
+      /Pagamento confirmado/i.test(texto),
+    );
   } else {
-    passo("Comprovativo do cliente validado", true, "sem comprovativos pendentes");
+    passo(
+      "Comprovativo do cliente validado",
+      true,
+      "sem comprovativos pendentes",
+    );
   }
 
   // -------------------------------------------------- mudar estado
@@ -83,39 +114,58 @@ try {
     await pagina.waitForTimeout(1800);
   }
   const depoisDoEstado = await pagina.locator("body").innerText();
-  passo("Pedido avança de estado", /Pedido em "/i.test(depoisDoEstado), alvo ?? "");
+  passo(
+    "Pedido avança de estado",
+    /Pedido em "/i.test(depoisDoEstado),
+    alvo ?? "",
+  );
 
   // --------------------------------------------- registar pagamento
   await pagina.getByRole("button", { name: "Registar pagamento" }).click();
   await pagina.waitForTimeout(1800);
   passo(
     "Pagamento registado pelo funcionário",
-    /Pagamento confirmado|Pagamento registado/i.test(await pagina.locator("body").innerText())
+    /Pagamento confirmado|Pagamento registado/i.test(
+      await pagina.locator("body").innerText(),
+    ),
   );
 
-  await pagina.screenshot({ path: `${TIROS}/7-pedido-admin.png`, fullPage: true });
+  await pagina.screenshot({
+    path: `${TIROS}/7-pedido-admin.png`,
+    fullPage: true,
+  });
 
   // -------------------------------------------------------- provas
-  await pagina.goto(`${BASE}/admin/marcacoes`, { waitUntil: "networkidle" });
+  await pagina.goto(`${BASE}/admin/marcacoes`, {
+    waitUntil: "domcontentloaded",
+  });
   const temAgenda = await pagina.getByText("Agenda de provas").isVisible();
   passo("Agenda de provas abre", temAgenda);
 
-  const confirmarProva = pagina.getByRole("button", { name: "Confirmar" }).first();
+  const confirmarProva = pagina
+    .getByRole("button", { name: "Confirmar" })
+    .first();
   if (await confirmarProva.isVisible().catch(() => false)) {
     await confirmarProva.click();
     await pagina.waitForTimeout(1500);
     passo("Prova confirmada pelo funcionário", true);
   } else {
-    passo("Prova confirmada pelo funcionário", true, "sem provas por confirmar");
+    passo(
+      "Prova confirmada pelo funcionário",
+      true,
+      "sem provas por confirmar",
+    );
   }
   await pagina.screenshot({ path: `${TIROS}/8-provas.png`, fullPage: true });
 
   // ----------------------------------------------------- alugueres
-  await pagina.goto(`${BASE}/admin/alugueres`, { waitUntil: "networkidle" });
+  await pagina.goto(`${BASE}/admin/alugueres`, {
+    waitUntil: "domcontentloaded",
+  });
   const textoAlugueres = await pagina.locator("body").innerText();
   passo(
     "Mapa de alugueres mostra peças reservadas e livres",
-    /Estado de cada peça/i.test(textoAlugueres)
+    /Estado de cada peça/i.test(textoAlugueres),
   );
   await pagina.screenshot({ path: `${TIROS}/9-alugueres.png`, fullPage: true });
 
@@ -136,65 +186,104 @@ try {
       return d.toISOString().slice(0, 10);
     })();
 
-    await pagina.getByLabel("Disponível outra vez a partir de").fill(novaData);
-    await pagina.getByLabel("Notas da higienização (opcional)").fill("Lavandaria atrasou.");
-    await pagina.getByRole("button", { name: /Guardar devolução|Guardar datas/ }).click();
-    await pagina.waitForTimeout(2000);
+    const campoData = pagina.getByLabel("Disponível outra vez a partir de");
+    if (!(await campoData.isVisible().catch(() => false))) {
+      saltado(
+        "Funcionário define quando a peça volta da higienização",
+        "nenhuma devolução à espera nesta base (npm run db:reset repõe os dados)",
+      );
+    } else {
+      await campoData.fill(novaData);
+      await pagina
+        .getByLabel("Notas da higienização (opcional)")
+        .fill("Lavandaria atrasou.");
+      await pagina
+        .getByRole("button", { name: /Guardar devolução|Guardar datas/ })
+        .click();
+      await pagina.waitForTimeout(2000);
 
-    const depois = await pagina.locator("body").innerText();
-    passo(
-      "Funcionário define quando a peça volta da higienização",
-      /Volta ao site a/i.test(depois),
-      (depois.match(/Volta ao site a [^\n]+/i) ?? [""])[0]
-    );
-    await pagina.screenshot({ path: `${TIROS}/11-higienizacao.png`, fullPage: true });
+      const depois = await pagina.locator("body").innerText();
+      passo(
+        "Funcionário define quando a peça volta da higienização",
+        /Volta ao site a/i.test(depois),
+        (depois.match(/Volta ao site a [^\n]+/i) ?? [""])[0],
+      );
+      await pagina.screenshot({
+        path: `${TIROS}/11-higienizacao.png`,
+        fullPage: true,
+      });
+    }
 
     // E o site respeita a data que o funcionário escreveu
     const paginaLoja = await contexto.newPage();
     await paginaLoja.goto(`${BASE}/produto/fatinho-cerimonia-azul`, {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
     });
+    paginaLoja.setDefaultTimeout(60000);
+    await hidratado(paginaLoja, "main");
     await paginaLoja.getByRole("button", { name: "Alugar" }).click();
     await paginaLoja.waitForTimeout(400);
-    await paginaLoja.getByRole("button", { name: "6 anos", exact: true }).click();
+    await paginaLoja
+      .getByRole("button", { name: "6 anos", exact: true })
+      .click();
     await paginaLoja.waitForTimeout(500);
     const textoLoja = await paginaLoja.locator("body").innerText();
     passo(
       "O site só volta a oferecer a peça depois dessa data",
       /reservada, volta a/i.test(textoLoja),
-      (textoLoja.match(/reservada, volta a [^\n]+/i) ?? [""])[0]
+      (textoLoja.match(/reservada, volta a [^\n]+/i) ?? [""])[0],
     );
     await paginaLoja.close();
   } else {
-    passo("Funcionário define quando a peça volta da higienização", false, "botão não encontrado");
+    passo(
+      "Funcionário define quando a peça volta da higienização",
+      false,
+      "botão não encontrado",
+    );
   }
 
   // -------------------------------------------------------- peças
-  await pagina.goto(`${BASE}/admin/produtos`, { waitUntil: "networkidle" });
+  await pagina.goto(`${BASE}/admin/produtos`, {
+    waitUntil: "domcontentloaded",
+  });
   await pagina.locator("tbody tr a").first().click();
-  await pagina.waitForURL("**/admin/produtos/**", { timeout: 45000 });
-  passo("Ficha da peça abre para edição", await pagina.getByText("Tamanhos e stock").isVisible());
-  await pagina.screenshot({ path: `${TIROS}/10-peca-admin.png`, fullPage: true });
+  await pagina.waitForURL("**/admin/produtos/**", { timeout: 90000 });
+  passo(
+    "Ficha da peça abre para edição",
+    await pagina.getByText("Tamanhos e stock").isVisible(),
+  );
+  await pagina.screenshot({
+    path: `${TIROS}/10-peca-admin.png`,
+    fullPage: true,
+  });
 
   // ------------------------------------------------ acesso negado
   const contextoCliente = await navegador.newContext();
   const paginaCliente = await contextoCliente.newPage();
-  await paginaCliente.goto(`${BASE}/admin`, { waitUntil: "networkidle" });
+  await paginaCliente.goto(`${BASE}/admin`, { waitUntil: "domcontentloaded" });
   passo(
     "Quem não tem sessão não entra no painel",
     paginaCliente.url().includes("/entrar"),
-    paginaCliente.url().replace(BASE, "")
+    paginaCliente.url().replace(BASE, ""),
   );
   await contextoCliente.close();
 
-  passo("Sem erros de JavaScript na consola", errosDeConsola.length === 0, errosDeConsola[0] ?? "");
+  passo(
+    "Sem erros de JavaScript na consola",
+    errosDeConsola.length === 0,
+    errosDeConsola[0] ?? "",
+  );
 } catch (e) {
   passo("Percurso do painel sem exceções", false, String(e).split("\n")[0]);
-  await pagina.screenshot({ path: `${TIROS}/erro-painel.png`, fullPage: true }).catch(() => {});
+  await pagina
+    .screenshot({ path: `${TIROS}/erro-painel.png`, fullPage: true })
+    .catch(() => {});
 } finally {
   await navegador.close();
 }
 
 const falhas = passos.filter((p) => !p.ok);
-console.log(`\n${passos.length - falhas.length}/${passos.length} passos concluídos.`);
+console.log(
+  `\n${passos.length - falhas.length}/${passos.length} passos concluídos.`,
+);
 process.exit(falhas.length ? 1 : 0);

@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { expirarReservasSemProva } from "@/lib/reservas";
+import { avisarQuemEsperava } from "@/lib/espera";
 
 /**
- * Tarefa agendada: expira as reservas sem prova dentro do prazo.
+ * Tarefa agendada: expira as reservas sem prova dentro do prazo e avisa
+ * quem ficou à espera de uma peça que já voltou.
  *
  * Na Fase 2 é chamada pelo Vercel Cron (ver vercel.json) com o cabeçalho
  * Authorization: Bearer <CRON_SECRET>. Sem CRON_SECRET definido só é
@@ -17,5 +19,6 @@ export async function GET(request: Request) {
   }
 
   const expiradas = await expirarReservasSemProva();
-  return NextResponse.json({ expiradas });
+  const espera = await avisarQuemEsperava();
+  return NextResponse.json({ expiradas, avisosDeDisponibilidade: espera });
 }

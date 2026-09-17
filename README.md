@@ -15,7 +15,7 @@ Em produção: **https://ddress.vercel.app**
 | Fase | Âmbito (SOW v2.1) | Estado |
 |---|---|---|
 | **1 — Frontend** | Identidade visual, loja, área do cliente, painel dos cinco perfis internos, fluxos de reserva, prova, pagamento, entrega, recolha e higienização com dados simulados, testes de interface | **Concluída — aguarda aprovação da DDRESS** |
-| **2 — Backend, dados, E2E e deployment** | Supabase, autenticação e RBAC em produção, integrações (e-mail, WhatsApp, Telegram), CEGID, relatórios PDF, conteúdos, notificações | Por iniciar — ver [O que falta para a Fase 2](#o-que-falta-para-a-fase-2) |
+| **2 — Backend, dados, E2E e deployment** | Supabase, autenticação e RBAC em produção, integrações (e-mail, WhatsApp, Telegram), CEGID, relatórios PDF, conteúdos, notificações | **Código concluído** — falta ligar as contas externas na Vercel; ver [O que falta](#o-que-falta) |
 
 Desvio assumido face ao SOW na Fase 1: em vez de simular APIs com MSW, o site corre sobre um
 PostgreSQL **embutido** (PGlite) com dados de demonstração. É o mesmo código, as mesmas
@@ -151,6 +151,17 @@ página do pedido dela. O relatório mensal tem versão em folha A4:
 tentativas erradas no mesmo e-mail travam a entrada durante 15 minutos
 (o dobro por endereço). Tudo fica em *Painel → Auditoria → Entradas nas contas*.
 
+### Avisar-me quando estiver livre, e newsletter
+
+Numa peça só de aluguer e sem nenhum tamanho livre, a cliente deixa nome,
+telefone e e-mail. A tarefa diária (`/api/tarefas/expirar-reservas`, cron da
+Vercel às 05:00) verifica quais dessas peças já voltaram e envia o aviso uma
+única vez. A equipa vê a lista em *Painel → Clientes*.
+
+A newsletter do rodapé só aceita inscrições com autorização explícita; cada
+e-mail traz a ligação de saída (`/newsletter/sair/<código>`) e quem sai fica
+registado. A lista também está em *Painel → Clientes*.
+
 ### Notificações
 
 Um pedido novo, cada mudança de estado relevante e cada solicitação criam avisos:
@@ -197,7 +208,9 @@ npm run capturas  # capturas a 390/768/1360 px com verificação de transbordo
 
 Os percursos e as capturas precisam do site a correr (`npx next dev -p 3100`) e usam o
 Chromium do Playwright, ou o Edge/Chrome instalados. Última execução: perfis 13/13,
-cliente 10/10, painel 15/15, conteúdos 19/19, contas 11/11, ficheiros 6/6.
+cliente 10/10, painel 15/15, conteúdos 19/19, contas 12/12, ficheiros 9/9 — 78 verificações.
+A suite conta com a base acabada de semear (`npm run db:reset`): os passos que dependem de
+dados já gastos ficam marcados como “salta”, em vez de falharem.
 
 ---
 
@@ -236,22 +249,33 @@ Nenhum segredo entra no repositório — o repositório é **público**.
 
 ---
 
-## O que falta para a Fase 2
+## O que falta
 
-- Supabase ligado na Vercel (secção 5) e, antes de abrir ao público, limpeza dos dados de
-  demonstração.
-- Importar os vestidos reais do catálogo de WhatsApp (as colecções Gala, Noite e Cerimónia são
-  provisórias).
-- Restantes conteúdos no painel: menus, FAQ e campanhas (página inicial, colecções, Quem
-  somos, parceiros e documentos já se gerem no painel).
-- Storage ligado na Vercel (o carregamento já está feito; falta o bucket e as chaves).
-- Factura CEGID: anexação manual já feita; integração automática depende da API e licença.
-- Credenciais de e-mail na Vercel (o envio já está feito); WhatsApp Business API e Telegram;
-  newsletter com consentimento e avisos de disponibilidade.
-- Relatórios: CSV para Excel e folha A4 para PDF já feitos; falta envio automático mensal.
-- Auditoria de preços e stock ao nível do campo (recuperação de palavra-passe, limite de
-  tentativas e auditoria de contas já feitos).
-- Pagamento com cartão, se houver contrato com operador.
+O código da Fase 2 está feito e publicado. O que sobra depende de contas e contratos
+da DDRESS, não de programação:
+
+**A DDRESS precisa de fazer** (tudo na Vercel, cinco minutos):
+
+1. Ligar o Supabase (secção 5) e definir `DDRESS_SENHA_ADMIN`.
+2. Criar o bucket **ddress** no Supabase Storage e definir `SUPABASE_URL` e
+   `SUPABASE_SERVICE_ROLE_KEY`.
+3. Definir as credenciais de e-mail (`SMTP_*` do Gmail da loja ou `RESEND_API_KEY`).
+4. Opcional: `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID`.
+5. Antes de abrir ao público: limpar os dados de demonstração e tornar o repositório privado.
+
+**Por decidir com a DDRESS:**
+
+- Importar os vestidos reais do catálogo de WhatsApp — as colecções Gala, Noite e Cerimónia
+  são provisórias até haver fotografias, nomes e preços.
+- Menus, FAQ e campanhas no painel (página inicial, colecções, Quem somos, parceiros e
+  documentos já se gerem no painel).
+- Envio automático do relatório mensal por e-mail.
+
+**Depende de contratos, fora do que o código resolve:**
+
+- Factura CEGID automática (anexação manual já está feita) — precisa da API e da licença.
+- WhatsApp Business API, se quiserem mensagens automáticas em vez das ligações actuais.
+- Pagamento com cartão, se houver contrato com um operador.
 
 ---
 
@@ -269,10 +293,10 @@ src/
   conteudo/            textos e vídeo da página inicial
   db/                  schema, ligação, migrações, semente, implantação
   lib/                 regras de negócio: armazenamento, contas, telegram, availability,
-                       expiracao, reservas, pedidos,
+                       expiracao, reservas, pedidos, espera (avisos e newsletter),
                        marcacoes, permissoes, auth, conteudos, solicitacoes, notificacoes,
                        email, whatsapp, auditoria
-drizzle/               migrações SQL versionadas
+drizzle/               migrações SQL versionadas (0000 a 0004)
 scripts/               testes de percurso e capturas
 docs/DESIGN.md         sistema visual
 ```

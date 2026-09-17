@@ -29,6 +29,13 @@
       "when": 1789679581175,
       "tag": "0003_slides_da_pagina_inicial",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789681553604,
+      "tag": "0004_avisos_disponibilidade_newsletter",
+      "breakpoints": true
     }
   ]
 }

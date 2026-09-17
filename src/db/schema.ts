@@ -819,6 +819,49 @@ export const auditLogs = pgTable(
 );
 
 // --------------------------------------------------------------------
+//  AVISOS DE DISPONIBILIDADE E NEWSLETTER
+// --------------------------------------------------------------------
+
+/** "Avise-me quando esta peça estiver livre" */
+export const availabilityAlerts = pgTable(
+  "availability_alerts",
+  {
+    id: id(),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    /** Tamanho concreto, quando a cliente indicou um */
+    variantId: text("variant_id").references(() => productVariants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+    customerName: text("customer_name").notNull(),
+    customerPhone: text("customer_phone").notNull(),
+    customerEmail: text("customer_email"),
+    /** Dia a partir do qual interessa à cliente */
+    wantedFrom: date("wanted_from", { mode: "date" }),
+    notifiedAt: timestamp("notified_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("availability_alerts_produto_idx").on(t.productId, t.notifiedAt)]
+);
+
+/** Newsletter: só com consentimento, e com saída num clique */
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscribers",
+  {
+    id: id(),
+    email: text("email").notNull(),
+    name: text("name").notNull().default(""),
+    /** "site" | "checkout" | "painel" */
+    source: text("source").notNull().default("site"),
+    /** Código da ligação de saída */
+    token: text("token").notNull(),
+    consentAt: timestamp("consent_at", { withTimezone: true }).notNull().defaultNow(),
+    unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("newsletter_email_key").on(t.email), uniqueIndex("newsletter_token_key").on(t.token)]
+);
+
+// --------------------------------------------------------------------
 //  SLIDES DA PÁGINA INICIAL — geridos no painel
 // --------------------------------------------------------------------
 

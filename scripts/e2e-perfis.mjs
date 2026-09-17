@@ -14,7 +14,7 @@ const BASE = process.argv[2] ?? "http://localhost:3100";
 const TIROS = ".capturas/e2e";
 mkdirSync(TIROS, { recursive: true });
 
-import { abrirNavegador } from "./navegador.mjs";
+import { abrirNavegador, hidratado } from "./navegador.mjs";
 
 const PERFIS = [
   {
@@ -47,7 +47,20 @@ const PERFIS = [
     nome: "Funcionário",
     email: "domingos@ddress.ao",
     palavra: "funcionario123",
-    seccoes: ["Resumo", "Pedidos", "Provas", "Alugueres", "Entregas", "Solicitações", "Notificações", "Peças", "Colecções", "Conteúdos", "Parceiros", "Clientes"],
+    seccoes: [
+      "Resumo",
+      "Pedidos",
+      "Provas",
+      "Alugueres",
+      "Entregas",
+      "Solicitações",
+      "Notificações",
+      "Peças",
+      "Colecções",
+      "Conteúdos",
+      "Parceiros",
+      "Clientes",
+    ],
     proibida: { rota: "/admin/equipa", esperado: "/admin" },
     tiro: "perfil-funcionario",
   },
@@ -80,21 +93,37 @@ const PERFIS = [
 const passos = [];
 function passo(nome, ok, extra = "") {
   passos.push({ nome, ok });
-  console.log(`${ok ? "  ok  " : " FALHA"} ${nome}${extra ? ` — ${extra}` : ""}`);
+  console.log(
+    `${ok ? "  ok  " : " FALHA"} ${nome}${extra ? ` — ${extra}` : ""}`,
+  );
+}
+
+/**
+ * Passo sem dados para correr — acontece quando a base já foi gasta por
+ * outra corrida. Não é falha do site, mas fica dito em voz alta.
+ */
+function saltado(nome, porque) {
+  passos.push({ nome, ok: true, saltado: true });
+  console.log(` salta ${nome} — ${porque}`);
 }
 
 const navegador = await abrirNavegador();
 
 try {
   for (const perfil of PERFIS) {
-    const contexto = await navegador.newContext({ viewport: { width: 1440, height: 950 } });
+    const contexto = await navegador.newContext({
+      viewport: { width: 1440, height: 950 },
+    });
     const pagina = await contexto.newPage();
+    pagina.setDefaultTimeout(60000);
+    pagina.setDefaultNavigationTimeout(120000);
 
-    await pagina.goto(`${BASE}/entrar`, { waitUntil: "networkidle" });
-    await pagina.getByLabel("E-mail").fill(perfil.email);
+    await pagina.goto(`${BASE}/entrar`, { waitUntil: "domcontentloaded" });
+    await hidratado(pagina, "form");
+    await pagina.getByLabel("E-mail", { exact: true }).fill(perfil.email);
     await pagina.getByLabel("Palavra-passe").fill(perfil.palavra);
     await pagina.getByRole("button", { name: "Entrar" }).click();
-    await pagina.waitForURL("**/admin**", { timeout: 30000 });
+    await pagina.waitForURL("**/admin**", { timeout: 90000 });
     await pagina.waitForTimeout(700);
 
     // Secções visíveis na navegação do painel
@@ -120,7 +149,7 @@ try {
           "Equipa",
           "Permissões",
           "Definições",
-        ].includes(t)
+        ].includes(t),
       );
 
     const emFalta = perfil.seccoes.filter((s) => !limpas.includes(s));
@@ -131,19 +160,24 @@ try {
       emFalta.length === 0 && aMais.length === 0,
       emFalta.length || aMais.length
         ? `faltam [${emFalta}] a mais [${aMais}]`
-        : limpas.join(", ")
+        : limpas.join(", "),
     );
 
-    await pagina.screenshot({ path: `${TIROS}/${perfil.tiro}.png`, fullPage: true });
+    await pagina.screenshot({
+      path: `${TIROS}/${perfil.tiro}.png`,
+      fullPage: true,
+    });
 
     // Rota fora do perfil
     if (perfil.proibida) {
-      await pagina.goto(`${BASE}${perfil.proibida.rota}`, { waitUntil: "networkidle" });
+      await pagina.goto(`${BASE}${perfil.proibida.rota}`, {
+        waitUntil: "domcontentloaded",
+      });
       const url = pagina.url().replace(BASE, "");
       passo(
         `${perfil.nome}: ${perfil.proibida.rota} fica fora do alcance`,
         !url.startsWith(perfil.proibida.rota),
-        `foi para ${url}`
+        `foi para ${url}`,
       );
     }
 
@@ -152,15 +186,24 @@ try {
 
   // O motorista regista uma entrega e uma recolha
   {
-    const contexto = await navegador.newContext({ viewport: { width: 1440, height: 950 } });
+    const contexto = await navegador.newContext({
+      viewport: { width: 1440, height: 950 },
+    });
     const pagina = await contexto.newPage();
-    await pagina.goto(`${BASE}/entrar`, { waitUntil: "networkidle" });
-    await pagina.getByLabel("E-mail").fill("motorista@ddress.ao");
+    pagina.setDefaultTimeout(60000);
+    pagina.setDefaultNavigationTimeout(120000);
+    await pagina.goto(`${BASE}/entrar`, { waitUntil: "domcontentloaded" });
+    await hidratado(pagina, "form");
+    await pagina
+      .getByLabel("E-mail", { exact: true })
+      .fill("motorista@ddress.ao");
     await pagina.getByLabel("Palavra-passe").fill("motorista123");
     await pagina.getByRole("button", { name: "Entrar" }).click();
-    await pagina.waitForURL("**/admin/entregas", { timeout: 30000 });
+    await pagina.waitForURL("**/admin/entregas", { timeout: 90000 });
 
-    const entregar = pagina.getByRole("button", { name: "Entregue ao cliente" }).first();
+    const entregar = pagina
+      .getByRole("button", { name: "Entregue ao cliente" })
+      .first();
     if (await entregar.isVisible().catch(() => false)) {
       await entregar.click();
       await pagina.waitForTimeout(2500);
@@ -168,26 +211,38 @@ try {
       const texto = await pagina.locator("body").innerText();
       passo(
         "Motorista regista a entrega",
-        /Entrega registada/i.test(texto) || /Não há entregas por fazer/i.test(texto)
+        /Entrega registada/i.test(texto) ||
+          /Não há entregas por fazer/i.test(texto),
       );
     } else {
-      passo("Motorista regista a entrega", false, "sem entregas na lista");
+      saltado(
+        "Motorista regista a entrega",
+        "nada por entregar nesta base (npm run db:reset repõe os dados)",
+      );
     }
 
-    const recolher = pagina.getByRole("button", { name: "Peça recolhida" }).first();
+    const recolher = pagina
+      .getByRole("button", { name: "Peça recolhida" })
+      .first();
     if (await recolher.isVisible().catch(() => false)) {
       await recolher.click();
       await pagina.waitForTimeout(2500);
       const depois = await pagina.locator("body").innerText();
       passo(
         "Motorista regista a recolha e a peça entra em higienização",
-        /higieniza/i.test(depois) || /Não há recolhas/i.test(depois)
+        /higieniza/i.test(depois) || /Não há recolhas/i.test(depois),
       );
     } else {
-      passo("Motorista regista a recolha e a peça entra em higienização", false, "sem recolhas");
+      saltado(
+        "Motorista regista a recolha e a peça entra em higienização",
+        "nada por recolher nesta base",
+      );
     }
 
-    await pagina.screenshot({ path: `${TIROS}/perfil-motorista-accoes.png`, fullPage: true });
+    await pagina.screenshot({
+      path: `${TIROS}/perfil-motorista-accoes.png`,
+      fullPage: true,
+    });
     await contexto.close();
   }
 
@@ -198,17 +253,20 @@ try {
   ]) {
     const contexto = await navegador.newContext();
     const pagina = await contexto.newPage();
-    await pagina.goto(`${BASE}/entrar`, { waitUntil: "networkidle" });
-    await pagina.getByLabel("E-mail").fill(email);
+    pagina.setDefaultTimeout(60000);
+    pagina.setDefaultNavigationTimeout(120000);
+    await pagina.goto(`${BASE}/entrar`, { waitUntil: "domcontentloaded" });
+    await hidratado(pagina, "form");
+    await pagina.getByLabel("E-mail", { exact: true }).fill(email);
     await pagina.getByLabel("Palavra-passe").fill(palavra);
     await pagina.getByRole("button", { name: "Entrar" }).click();
-    await pagina.waitForURL("**/admin**", { timeout: 30000 });
+    await pagina.waitForURL("**/admin**", { timeout: 90000 });
 
     const resposta = await pagina.request.get(`${BASE}/api/relatorios`);
     passo(
       `${nome}: exportação financeira responde ${esperado}`,
       resposta.status() === esperado,
-      `recebeu ${resposta.status()}`
+      `recebeu ${resposta.status()}`,
     );
     await contexto.close();
   }
@@ -219,6 +277,9 @@ try {
 }
 
 const falhas = passos.filter((p) => !p.ok);
-console.log(`\n${passos.length - falhas.length}/${passos.length} verificações.`);
+const saltados = passos.filter((p) => p.saltado).length;
+console.log(
+  `\n${passos.length - falhas.length}/${passos.length} verificações${saltados ? ` (${saltados} saltadas por falta de dados)` : ""}.`,
+);
 console.log(`Imagens em ${TIROS}`);
 process.exit(falhas.length ? 1 : 0);

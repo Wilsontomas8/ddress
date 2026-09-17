@@ -539,7 +539,8 @@ export async function semear(
       notifications, service_request_products, service_requests, partners,
       product_suggestions, collection_products, collections, media_items,
       page_highlights, pages, role_permissions, audit_logs, home_slides,
-      password_resets, login_attempts, order_documents, uploads
+      password_resets, login_attempts, order_documents, uploads,
+      availability_alerts, newsletter_subscribers
     RESTART IDENTITY CASCADE
   `);
 

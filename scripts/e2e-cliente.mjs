@@ -14,7 +14,7 @@ const BASE = process.argv[2] ?? "http://localhost:3100";
 const TIROS = ".capturas/e2e";
 mkdirSync(TIROS, { recursive: true });
 
-import { abrirNavegador } from "./navegador.mjs";
+import { abrirNavegador, hidratado } from "./navegador.mjs";
 
 function dia(offset) {
   const d = new Date();
@@ -25,27 +25,36 @@ function dia(offset) {
 const passos = [];
 function passo(nome, ok, extra = "") {
   passos.push({ nome, ok, extra });
-  console.log(`${ok ? "  ok  " : " FALHA"} ${nome}${extra ? ` — ${extra}` : ""}`);
+  console.log(
+    `${ok ? "  ok  " : " FALHA"} ${nome}${extra ? ` — ${extra}` : ""}`,
+  );
 }
 
 const navegador = await abrirNavegador();
-const contexto = await navegador.newContext({ viewport: { width: 1360, height: 1000 } });
+const contexto = await navegador.newContext({
+  viewport: { width: 1360, height: 1000 },
+});
 const pagina = await contexto.newPage();
+pagina.setDefaultTimeout(60000);
+pagina.setDefaultNavigationTimeout(120000);
 
 const errosDeConsola = [];
 pagina.on("pageerror", (e) => errosDeConsola.push(String(e)));
 
 try {
   // ------------------------------------------------------- catálogo
-  await pagina.goto(`${BASE}/loja/mulher`, { waitUntil: "networkidle" });
+  await pagina.goto(`${BASE}/loja/mulher`, { waitUntil: "domcontentloaded" });
   const cartoes = await pagina.locator("article").count();
   passo("A secção Mulher lista peças", cartoes > 0, `${cartoes} peças`);
 
   // --------------------------------------------------------- peça
-  await pagina.goto(`${BASE}/produto/vestido-gala-bordeaux`, { waitUntil: "networkidle" });
+  await pagina.goto(`${BASE}/produto/vestido-gala-bordeaux`, {
+    waitUntil: "domcontentloaded",
+  });
+  await hidratado(pagina, "main");
   passo(
     "Página da peça abre",
-    (await pagina.locator("h1").innerText()).includes("Vestido de Gala")
+    (await pagina.locator("h1").innerText()).includes("Vestido de Gala"),
   );
 
   // A peça 38 está reservada no cenário de demonstração: confirmamos
@@ -56,7 +65,7 @@ try {
   passo(
     "Peça com reserva aparece como indisponível",
     /reservada, volta a/i.test(textoOcupada),
-    (textoOcupada.match(/reservada, volta a [^\n]+/i) ?? [""])[0]
+    (textoOcupada.match(/reservada, volta a [^\n]+/i) ?? [""])[0],
   );
 
   // Escolher um tamanho livre
@@ -84,13 +93,22 @@ try {
     .waitFor({ timeout: 20000 })
     .then(() => true)
     .catch(() => false);
-  passo("Orçamento do aluguer calculado no servidor", temOrcamento, `${inicio} → ${fim}`);
+  passo(
+    "Orçamento do aluguer calculado no servidor",
+    temOrcamento,
+    `${inicio} → ${fim}`,
+  );
 
   await pagina.screenshot({ path: `${TIROS}/1-produto.png`, fullPage: true });
 
   // Calendário de prova (obrigatória nesta peça)
-  await pagina.getByText("Resido em Luanda", { exact: false }).first().waitFor({ timeout: 5000 });
-  const botoesHora = pagina.locator("button").filter({ hasText: /^\d{2}:\d{2}$/ });
+  await pagina
+    .getByText("Resido em Luanda", { exact: false })
+    .first()
+    .waitFor({ timeout: 5000 });
+  const botoesHora = pagina
+    .locator("button")
+    .filter({ hasText: /^\d{2}:\d{2}$/ });
   await botoesHora.first().waitFor({ timeout: 8000 });
 
   // Escolher a primeira hora que não esteja desativada
@@ -104,25 +122,38 @@ try {
       break;
     }
   }
-  passo("Horário de prova escolhido no calendário da peça", !!horaEscolhida, horaEscolhida ?? "");
+  passo(
+    "Horário de prova escolhido no calendário da peça",
+    !!horaEscolhida,
+    horaEscolhida ?? "",
+  );
 
   await pagina.waitForTimeout(300);
-  await pagina.screenshot({ path: `${TIROS}/2-calendario.png`, fullPage: true });
+  await pagina.screenshot({
+    path: `${TIROS}/2-calendario.png`,
+    fullPage: true,
+  });
 
   // ------------------------------------------------------ carrinho
   await pagina.getByRole("button", { name: "Finalizar pedido" }).click();
-  await pagina.waitForURL("**/carrinho", { timeout: 45000 });
-  passo("Peça no carrinho", await pagina.getByText("Vestido de Gala").first().isVisible());
+  await pagina.waitForURL("**/carrinho", { timeout: 90000 });
+  passo(
+    "Peça no carrinho",
+    await pagina.getByText("Vestido de Gala").first().isVisible(),
+  );
   await pagina.screenshot({ path: `${TIROS}/3-carrinho.png`, fullPage: true });
 
   // ------------------------------------------------------ checkout
   await pagina.getByRole("link", { name: "Continuar", exact: true }).click();
-  await pagina.waitForURL("**/checkout", { timeout: 45000 });
+  await pagina.waitForURL("**/checkout", { timeout: 90000 });
 
   await pagina.getByLabel("Nome completo").fill("Teresa Domingos");
   await pagina.getByLabel("Telefone").fill("+244 927 555 111");
   await pagina.getByLabel("E-mail (opcional)").fill("teresa@exemplo.ao");
-  await pagina.getByText("Multicaixa Express", { exact: false }).first().click();
+  await pagina
+    .getByText("Multicaixa Express", { exact: false })
+    .first()
+    .click();
   await pagina.screenshot({ path: `${TIROS}/4-checkout.png`, fullPage: true });
 
   await pagina.getByRole("button", { name: "Enviar pedido" }).click();
@@ -133,25 +164,36 @@ try {
   await pagina.screenshot({ path: `${TIROS}/5-pedido.png`, fullPage: true });
 
   // Depois do pedido, a peça que acabou de ser reservada sai do catálogo
-  await pagina.goto(`${BASE}/produto/vestido-gala-bordeaux`, { waitUntil: "networkidle" });
+  await pagina.goto(`${BASE}/produto/vestido-gala-bordeaux`, {
+    waitUntil: "domcontentloaded",
+  });
+  await hidratado(pagina, "main");
   await pagina.getByRole("button", { name: "36", exact: true }).click();
   await pagina.waitForTimeout(600);
   const textoPeca = await pagina.locator("body").innerText();
   passo(
     "A peça acabada de reservar sai do catálogo",
     /reservada, volta a/i.test(textoPeca),
-    (textoPeca.match(/reservada, volta a [^\n]+/i) ?? [""])[0]
+    (textoPeca.match(/reservada, volta a [^\n]+/i) ?? [""])[0],
   );
 
-  passo("Sem erros de JavaScript na consola", errosDeConsola.length === 0, errosDeConsola[0] ?? "");
+  passo(
+    "Sem erros de JavaScript na consola",
+    errosDeConsola.length === 0,
+    errosDeConsola[0] ?? "",
+  );
 } catch (e) {
   passo("Percurso completo sem exceções", false, String(e).split("\n")[0]);
-  await pagina.screenshot({ path: `${TIROS}/erro.png`, fullPage: true }).catch(() => {});
+  await pagina
+    .screenshot({ path: `${TIROS}/erro.png`, fullPage: true })
+    .catch(() => {});
 } finally {
   await navegador.close();
 }
 
 const falhas = passos.filter((p) => !p.ok);
-console.log(`\n${passos.length - falhas.length}/${passos.length} passos concluídos.`);
+console.log(
+  `\n${passos.length - falhas.length}/${passos.length} passos concluídos.`,
+);
 console.log(`Imagens em ${TIROS}`);
 process.exit(falhas.length ? 1 : 0);

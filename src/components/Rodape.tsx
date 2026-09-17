@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FormularioNewsletter from "./FormularioNewsletter";
 
 type Props = {
   loja: {
@@ -94,6 +95,10 @@ export default function Rodape({ loja }: Props) {
                   </a>
                 </li>
               )}
+              <li className="pt-1">
+                <p className="rotulo mb-3 text-ouro-claro">Novidades</p>
+                <FormularioNewsletter />
+              </li>
               <li className="flex gap-5 pt-1">
                 <a
                   href={`https://wa.me/${whatsapp}`}

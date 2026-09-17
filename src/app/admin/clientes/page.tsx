@@ -5,12 +5,14 @@ import { appointments, orders, users } from "@/db/schema";
 import { formatKz } from "@/lib/money";
 import { formatNumericDate } from "@/lib/dates";
 import { exigirAcesso } from "@/lib/guarda";
+import { esperasPorTratar, listarNewsletter } from "@/lib/espera";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Clientes" };
 
 export default async function PaginaClientes() {
   await exigirAcesso("clientes");
+  const [esperas, newsletter] = await Promise.all([esperasPorTratar(50), listarNewsletter()]);
 
   const [clientes, todosPedidos, todasMarcacoes] = await Promise.all([
     db.select().from(users).where(eq(users.role, "CLIENTE")).orderBy(asc(users.name)),
@@ -139,6 +141,94 @@ export default async function PaginaClientes() {
           </div>
         </section>
       )}
+
+      {/* --------------------------------------- à espera de uma peça */}
+      <section className="mt-12">
+        <h2 className="font-display text-lg">À espera de uma peça</h2>
+        <p className="mt-1 text-sm text-tinta-70">
+          Pedidos de “avise-me quando estiver livre”. O aviso sai sozinho na tarefa diária, por e-mail, quando a peça volta.
+        </p>
+        {esperas.length === 0 ? (
+          <p className="cartao mt-4 p-6 text-sm text-tinta-50">Ninguém à espera de momento.</p>
+        ) : (
+          <div className="cartao mt-4 overflow-x-auto">
+            <table className="tabela">
+              <thead>
+                <tr>
+                  <th>Peça</th>
+                  <th>Cliente</th>
+                  <th>Contactos</th>
+                  <th>Precisa a partir de</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {esperas.map((e) => (
+                  <tr key={e.id}>
+                    <td>
+                      <Link href={`/produto/${e.slug}`} target="_blank" className="hover:text-ouro-escuro">
+                        {e.peca}
+                      </Link>
+                    </td>
+                    <td>{e.nome}</td>
+                    <td className="text-xs">
+                      <span className="num block">{e.telefone}</span>
+                      {e.email && <span className="block text-tinta-50">{e.email}</span>}
+                    </td>
+                    <td className="num text-xs">{e.desde ? formatNumericDate(e.desde) : "—"}</td>
+                    <td>
+                      {e.avisadoEm ? (
+                        <span className="selo tom-verde">Avisada {formatNumericDate(e.avisadoEm)}</span>
+                      ) : (
+                        <span className="selo tom-ouro">À espera</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* --------------------------------------- newsletter */}
+      <section className="mt-12">
+        <h2 className="font-display text-lg">Newsletter</h2>
+        <p className="mt-1 text-sm text-tinta-70">
+          {newsletter.filter((n) => !n.unsubscribedAt).length} pessoas autorizaram receber novidades. Cada e-mail traz a ligação
+          de saída; quem sai fica registado e não volta a ser contactado.
+        </p>
+        {newsletter.length > 0 && (
+          <div className="cartao mt-4 overflow-x-auto">
+            <table className="tabela">
+              <thead>
+                <tr>
+                  <th>E-mail</th>
+                  <th>Autorizou em</th>
+                  <th>Origem</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {newsletter.map((n) => (
+                  <tr key={n.id}>
+                    <td className="text-sm">{n.email}</td>
+                    <td className="num text-xs">{formatNumericDate(n.consentAt)}</td>
+                    <td className="text-xs text-tinta-50">{n.source}</td>
+                    <td>
+                      {n.unsubscribedAt ? (
+                        <span className="selo tom-neutro">Saiu</span>
+                      ) : (
+                        <span className="selo tom-verde">Activa</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

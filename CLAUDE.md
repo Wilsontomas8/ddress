@@ -5,8 +5,10 @@ Instruções permanentes para trabalhar neste repositório.
 ## Projecto
 
 Loja online da **DDRESS — Venda e Aluguer de Vestidos** (Luanda). Fornecedor: WIL IT Soluções.
-Âmbito: SOW v2.1 em duas fases. **Fase 1 (frontend) concluída**, a aguardar aprovação;
-**Fase 2** (Supabase, integrações, CEGID, PDF, notificações) por iniciar. Ver `README.md`.
+Âmbito: SOW v2.1 em duas fases. **Fase 1 concluída** e **código da Fase 2 concluído**
+(colecções, conteúdos, solicitações, permissões, avisos, ficheiros, facturas, relatório em
+PDF, recuperação de palavra-passe, avisos de disponibilidade e newsletter). O que falta
+depende de contas externas da DDRESS na Vercel — ver "O que falta" no `README.md`.
 
 **Modelo de execução:** Wilson Tomás decide e valida; Claude implementa. Decisões de negócio,
 preços e conteúdo institucional são da DDRESS — se não estão no código ou no README, perguntar.
