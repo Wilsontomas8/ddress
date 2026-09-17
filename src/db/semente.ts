@@ -589,9 +589,15 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
     }
   }
 
+  // --------------------------------------------- histórico (6 meses)
+  avisar("Histórico de vendas e alugueres dos últimos meses...");
+  const anoAtual = new Date().getFullYear();
+  const historico = await semearHistorico(db, varianteIds, [funcionarioId, funcionaria2Id]);
+  const numeroDemo = (n: number) =>
+    `DDR-${anoAtual}-${String((historico.porAno.get(anoAtual) ?? 0) + n).padStart(4, "0")}`;
+
   // ------------------------------------------------- pedidos de exemplo
   avisar("Pedidos e marcações de demonstração...");
-  const anoAtual = new Date().getFullYear();
 
   // --- Pedido 1: aluguer de vestido, à espera de prova ---
   const pedido1 = uid();
@@ -602,7 +608,7 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
 
   await db.insert(orders).values({
     id: pedido1,
-    number: `DDR-${anoAtual}-0001`,
+    number: numeroDemo(1),
     userId: clienteId,
     customerName: "Joana Miguel",
     customerPhone: "+244 924 111 222",
@@ -698,7 +704,7 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
 
   await db.insert(orders).values({
     id: pedido2,
-    number: `DDR-${anoAtual}-0002`,
+    number: numeroDemo(2),
     userId: cliente2Id,
     customerName: "Paulo Neto",
     customerPhone: "+244 925 333 444",
@@ -783,7 +789,7 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
 
   await db.insert(orders).values({
     id: pedido3,
-    number: `DDR-${anoAtual}-0003`,
+    number: numeroDemo(3),
     customerName: "Aurora Capemba",
     customerPhone: "+244 928 444 100",
     customerEmail: "aurora@exemplo.ao",
@@ -833,7 +839,7 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
 
   await db.insert(orders).values({
     id: pedido4,
-    number: `DDR-${anoAtual}-0004`,
+    number: numeroDemo(4),
     customerName: "Nelson Tchipa",
     customerPhone: "+244 929 777 300",
     customerEmail: "nelson@exemplo.ao",
@@ -877,7 +883,7 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
     endDate: dia(0),
     blockUntil: dia(3),
     status: "ENTREGUE",
-    note: `Reserva do pedido DDR-${anoAtual}-0004.`,
+    note: `Reserva do pedido ${numeroDemo(4)}.`,
   });
 
   await db.insert(payments).values({
@@ -945,7 +951,7 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
 
   avisar("");
   avisar("  Pronto.");
-  avisar(`  ${totalProdutos} produtos, ${varianteIds.size} peças, 4 pedidos, 2 marcações.`);
+  avisar(`  ${totalProdutos} produtos, ${varianteIds.size} peças, ${historico.total} pedidos de histórico, 4 pedidos em curso, 2 marcações.`);
   avisar("");
   avisar("  Contas de acesso:");
   avisar("    Administrador   admin@ddress.ao       admin123");
@@ -956,6 +962,201 @@ export async function semear(db: BaseDeDados, avisar: (m: string) => void = cons
   avisar("    Motorista       motorista@ddress.ao       motorista123");
   avisar("    Cliente         cliente@exemplo.ao        cliente123");
   avisar("");
+}
+
+// ------------------------------------------------------------ histórico
+
+const CLIENTES_FICTICIOS = [
+  ["Ana Paula Domingos", "Talatona"],
+  ["Bruno Sebastião", "Kilamba"],
+  ["Carla Mendes", "Maianga"],
+  ["Délcio Francisco", "Viana"],
+  ["Edna Quintas", "Alvalade"],
+  ["Fábio Neto", "Benfica"],
+  ["Graça Lopes", "Ingombota"],
+  ["Hélder Cassoma", "Cazenga"],
+  ["Irina Tavares", "Miramar"],
+  ["João Baptista", "Samba"],
+  ["Kátia Rodrigues", "Talatona"],
+  ["Lukeny Manuel", "Zango"],
+  ["Mariana Costa", "Maianga"],
+  ["Nelson Kiala", "Morro Bento"],
+  ["Olga Fernandes", "Alvalade"],
+  ["Paulo Dias", "Kilamba"],
+  ["Rosa Chipenda", "Viana"],
+  ["Sílvio André", "Ingombota"],
+] as const;
+
+/** Gerador pseudo-aleatório com semente fixa: o histórico é sempre igual */
+function aleatorio(semente: number) {
+  let a = semente;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Pedidos já fechados nos últimos seis meses, para o painel e os relatórios
+ * terem movimento. Todos os clientes são fictícios. Não mexe no stock nem
+ * bloqueia peças: são vendas entregues e alugueres devolvidos.
+ */
+async function semearHistorico(
+  db: BaseDeDados,
+  varianteIds: Map<string, string>,
+  funcionarios: string[]
+): Promise<{ total: number; porAno: Map<number, number> }> {
+  const rnd = aleatorio(2026);
+  const escolher = <T,>(lista: readonly T[]) => lista[Math.floor(rnd() * lista.length)];
+  const hoje = dia(0);
+  const limite = somaDias(hoje, -12);
+  const POR_MES = [6, 7, 9, 8, 11, 12];
+
+  type Plano = { criado: Date; produto: DefProduto; tipo: "VENDA" | "ALUGUER" };
+  const planos: Plano[] = [];
+
+  for (let m = 5; m >= 0; m--) {
+    const inicioMes = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() - m, 1));
+    for (let i = 0; i < POR_MES[5 - m]; i++) {
+      const criado = new Date(inicioMes);
+      criado.setUTCDate(1 + Math.floor(rnd() * 27));
+      criado.setUTCHours(8 + Math.floor(rnd() * 9), Math.floor(rnd() * 60));
+      if (criado.getTime() > limite.getTime()) continue;
+      const produto = escolher(PRODUTOS);
+      const tipo: "VENDA" | "ALUGUER" =
+        produto.oferta === "AMBOS"
+          ? rnd() < 0.55
+            ? "ALUGUER"
+            : "VENDA"
+          : produto.oferta === "ALUGUER"
+            ? "ALUGUER"
+            : "VENDA";
+      planos.push({ criado, produto, tipo });
+    }
+  }
+  planos.sort((a, b) => a.criado.getTime() - b.criado.getTime());
+
+  const porAno = new Map<number, number>();
+  const metodos = ["MULTICAIXA_EXPRESS", "TRANSFERENCIA", "NA_ENTREGA"] as const;
+
+  for (const { criado, produto: p, tipo } of planos) {
+    const ano = criado.getUTCFullYear();
+    const n = (porAno.get(ano) ?? 0) + 1;
+    porAno.set(ano, n);
+
+    const variante =
+      p.variantes.find((v) => (tipo === "VENDA" ? (v.stockVenda ?? 0) : (v.stockAluguer ?? 0)) > 0) ?? p.variantes[0];
+    const variantId = varianteIds.get(`${p.slug}|${variante.tamanho}`)!;
+    const produtoId = (await produtoIdPorSlug(db, p.slug))!;
+    const [nome, bairro] = escolher(CLIENTES_FICTICIOS);
+    const domicilio = rnd() < 0.4;
+    const metodo = escolher(metodos);
+    const pedidoId = uid();
+
+    let preco = p.precoVenda ?? 0;
+    let caucao = 0;
+    let inicio: Date | null = null;
+    let fim: Date | null = null;
+    let dias: number | null = null;
+
+    if (tipo === "ALUGUER") {
+      dias = 2 + Math.floor(rnd() * 3);
+      const diaDoPedido = new Date(Date.UTC(criado.getUTCFullYear(), criado.getUTCMonth(), criado.getUTCDate()));
+      inicio = somaDias(diaDoPedido, 4 + Math.floor(rnd() * 5));
+      fim = somaDias(inicio, dias - 1);
+      preco = (p.precoDia ?? 0) * dias;
+      if (p.precoFimDeSemana && inicio.getUTCDay() === 5 && p.precoFimDeSemana < preco) preco = p.precoFimDeSemana;
+      caucao = p.caucao ?? 0;
+    }
+
+    const entrega = domicilio ? 2500 : 0;
+    const total = preco + caucao + entrega;
+    const telefone = `+244 9${20 + Math.floor(rnd() * 79)} ${100 + Math.floor(rnd() * 900)} ${100 + Math.floor(rnd() * 900)}`;
+
+    await db.insert(orders).values({
+      id: pedidoId,
+      number: `DDR-${ano}-${String(n).padStart(4, "0")}`,
+      customerName: nome,
+      customerPhone: telefone,
+      customerAddress: domicilio ? `${bairro}, Luanda` : null,
+      status: "CONCLUIDO",
+      paymentMethod: metodo,
+      paymentStatus: "PAGO",
+      subtotal: preco,
+      depositTotal: caucao,
+      deliveryFee: entrega,
+      total,
+      needsFitting: tipo === "ALUGUER" && !!p.provaObrigatoria,
+      assignedToId: escolher(funcionarios),
+      createdAt: criado,
+      updatedAt: fim ?? criado,
+    });
+
+    const itemId = uid();
+    await db.insert(orderItems).values({
+      id: itemId,
+      orderId: pedidoId,
+      productId: produtoId,
+      variantId,
+      productName: p.nome,
+      variantLabel: `Tamanho ${variante.tamanho} · ${variante.cor}`,
+      imageUrl: p.imagem,
+      kind: tipo,
+      quantity: 1,
+      unitPrice: preco,
+      deposit: caucao,
+      lineTotal: preco,
+      startDate: inicio,
+      endDate: fim,
+      days: dias,
+    });
+
+    if (tipo === "ALUGUER" && inicio && fim) {
+      await db.insert(rentalReservations).values({
+        variantId,
+        orderId: pedidoId,
+        orderItemId: itemId,
+        startDate: inicio,
+        endDate: fim,
+        blockUntil: somaDias(fim, p.diasHigienizacao ?? 2),
+        returnedAt: fim,
+        status: "DEVOLVIDA",
+        cleaningNote: "Higienização concluída.",
+      });
+    }
+
+    await db.insert(payments).values({
+      orderId: pedidoId,
+      method: metodo,
+      amount: total,
+      status: "PAGO",
+      confirmedById: funcionarios[0],
+      confirmedAt: criado,
+      createdAt: criado,
+    });
+    if (caucao > 0) {
+      await db.insert(payments).values({
+        orderId: pedidoId,
+        method: metodo,
+        amount: caucao,
+        status: "REEMBOLSADO",
+        isDepositRefund: true,
+        confirmedById: funcionarios[0],
+        confirmedAt: fim ?? criado,
+        createdAt: fim ?? criado,
+      });
+    }
+
+    await db.insert(orderEvents).values([
+      { orderId: pedidoId, type: "CRIADO", message: "Pedido criado no site com 1 peça(s).", createdAt: criado },
+      { orderId: pedidoId, type: "ESTADO", message: "Estado alterado para “Concluído”.", createdAt: fim ?? criado },
+    ]);
+  }
+
+  return { total: planos.length, porAno };
 }
 
 /** Devolve o id do produto a partir do slug */

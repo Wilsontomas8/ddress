@@ -113,7 +113,7 @@ export default async function PaginaPedidoAdmin({
         </div>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_24rem]">
+      <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_24rem]">
         {/* ------------------------------------------------ esquerda */}
         <div className="space-y-8">
           {/* cliente */}
@@ -314,7 +314,8 @@ export default async function PaginaPedidoAdmin({
             {pagamentos.length === 0 ? (
               <p className="mt-3 text-sm text-tinta-50">Ainda não há movimentos.</p>
             ) : (
-              <table className="tabela mt-3">
+              <div className="mt-3 overflow-x-auto">
+              <table className="tabela">
                 <thead>
                   <tr>
                     <th>Data</th>
@@ -344,6 +345,7 @@ export default async function PaginaPedidoAdmin({
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </section>
 

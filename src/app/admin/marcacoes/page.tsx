@@ -77,7 +77,7 @@ export default async function PaginaMarcacoes({
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href={`/admin/marcacoes?desde=${toISODay(addDays(desde, -14))}`}
             className="btn btn-contorno px-3 py-1.5 text-xs"
@@ -170,7 +170,7 @@ export default async function PaginaMarcacoes({
                             )}
                           </div>
 
-                          <div className="flex flex-col items-end gap-2">
+                          <div className="flex flex-col items-start gap-2 sm:items-end">
                             <span className={`selo ${e.cor}`}>{e.label}</span>
                             <span className="text-[0.65rem] text-tinta-50">{m.code}</span>
                           </div>

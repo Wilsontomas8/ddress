@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import CartaoProduto from "@/components/CartaoProduto";
 import HeroInicio from "@/components/HeroInicio";
-import { SLIDES_INICIO } from "@/conteudo/slides-inicio";
+import { SLIDES_INICIO, VIDEO_INICIO } from "@/conteudo/slides-inicio";
 import { listarProdutos } from "@/lib/catalogo";
 
 export const dynamic = "force-dynamic";
@@ -56,7 +56,7 @@ export default async function PaginaInicial() {
 
   return (
     <>
-      <HeroInicio slides={SLIDES_INICIO} />
+      <HeroInicio slides={SLIDES_INICIO} video={VIDEO_INICIO} />
 
       {/* ------------------------------------------------ garantias */}
       <section aria-label="O que a DDRESS garante" className="border-b border-marfim-200">

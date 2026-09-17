@@ -520,3 +520,9 @@
     display: none !important;
   }
 }
+
+/* No painel, os itens de grelha podem encolher: tabelas largas passam a
+   rolar dentro do seu cartão em vez de alargarem a página. */
+.tema-escuro main :where(.grid > *) {
+  min-width: 0;
+}

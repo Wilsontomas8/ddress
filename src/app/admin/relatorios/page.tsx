@@ -87,7 +87,7 @@ export default async function PaginaRelatorios({
         ))}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_20rem]">
         {/* --------------------------------------------------- linhas */}
         <section>
           <h2 className="font-display text-xl">Pedidos do mês</h2>

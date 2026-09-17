@@ -4,6 +4,8 @@
  *
  *   node scripts/capturas.mjs [url-base] [pasta] [rota ...]
  *
+ *   ENTRAR="admin@ddress.ao:admin123" — inicia sessão antes das capturas
+ *
  * Usa o Chromium do Playwright se existir; senão, o Edge ou o Chrome
  * instalados no sistema.
  */
@@ -40,8 +42,13 @@ for (const largura of LARGURAS) {
   const contexto = await navegador.newContext({
     viewport: { width: largura, height: largura < 700 ? 844 : 900 },
     deviceScaleFactor: 1,
-    reducedMotion: "reduce",
+    reducedMotion: process.env.MOVIMENTO ? "no-preference" : "reduce",
   });
+  if (process.env.ENTRAR) {
+    const [email, password] = process.env.ENTRAR.split(":");
+    const r = await contexto.request.post(BASE + "/api/auth/entrar", { data: { email, password } });
+    if (!r.ok()) throw new Error(`Não foi possível entrar como ${email}: ${r.status()}`);
+  }
   const pagina = await contexto.newPage();
   for (const rota of ROTAS) {
     await pagina.goto(BASE + rota, { waitUntil: "networkidle" });
