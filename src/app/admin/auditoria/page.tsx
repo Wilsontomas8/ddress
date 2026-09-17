@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { and, desc, eq, ilike, or } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { orderEvents, orders, users } from "@/db/schema";
+import { auditLogs, orderEvents, orders, users } from "@/db/schema";
 import { exigirAcesso } from "@/lib/guarda";
 import { formatDateTime } from "@/lib/dates";
 import { PAPEL } from "@/lib/labels";
@@ -20,6 +20,7 @@ const TIPOS = [
   { valor: "RECOLHA", texto: "Recolhas" },
   { valor: "NOTA", texto: "Notas internas" },
   { valor: "EXPIRADO", texto: "Reservas expiradas" },
+  { valor: "PAINEL", texto: "Catálogo, conteúdos e permissões" },
 ];
 
 const COR_DO_TIPO: Record<string, string> = {
@@ -32,6 +33,12 @@ const COR_DO_TIPO: Record<string, string> = {
   RECOLHA: "tom-ouro",
   NOTA: "tom-neutro",
   EXPIRADO: "tom-rubi",
+  PERMISSOES: "tom-rubi",
+  COLECCAO: "tom-violeta",
+  CONTEUDO: "tom-violeta",
+  PARCEIRO: "tom-azul",
+  SOLICITACAO: "tom-ouro",
+  PRODUTO: "tom-verde",
 };
 
 export default async function PaginaAuditoria({
@@ -42,33 +49,65 @@ export default async function PaginaAuditoria({
   await exigirAcesso("auditoria");
 
   const sp = await searchParams;
-  const um = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+  const um = (v: string | string[] | undefined) =>
+    Array.isArray(v) ? v[0] : v;
   const tipo = um(sp.tipo) ?? "";
   const procura = um(sp.q)?.trim();
 
+  const doPainel = tipo === "PAINEL";
   const condicoes = [];
-  if (tipo) condicoes.push(eq(orderEvents.type, tipo));
+  if (tipo && !doPainel) condicoes.push(eq(orderEvents.type, tipo));
   if (procura) {
     const termo = `%${procura}%`;
     condicoes.push(
-      or(ilike(orderEvents.message, termo), ilike(orders.number, termo), ilike(users.name, termo))!
+      or(
+        ilike(orderEvents.message, termo),
+        ilike(orders.number, termo),
+        ilike(users.name, termo),
+      )!,
     );
   }
 
-  const registos = await db
-    .select({
-      e: orderEvents,
-      quem: users.name,
-      papel: users.role,
-      pedidoId: orders.id,
-      pedidoNumero: orders.number,
-    })
-    .from(orderEvents)
-    .leftJoin(users, eq(orderEvents.actorId, users.id))
-    .leftJoin(orders, eq(orderEvents.orderId, orders.id))
-    .where(condicoes.length ? and(...condicoes) : undefined)
-    .orderBy(desc(orderEvents.createdAt))
-    .limit(300);
+  const registos = doPainel
+    ? await db
+        .select({
+          e: {
+            id: auditLogs.id,
+            type: auditLogs.area,
+            message: auditLogs.message,
+            createdAt: auditLogs.createdAt,
+          },
+          quem: users.name,
+          papel: users.role,
+          pedidoId: sql<string | null>`NULL`,
+          pedidoNumero: sql<string | null>`NULL`,
+        })
+        .from(auditLogs)
+        .leftJoin(users, eq(auditLogs.actorId, users.id))
+        .where(
+          procura
+            ? or(
+                ilike(auditLogs.message, `%${procura}%`),
+                ilike(users.name, `%${procura}%`),
+              )
+            : undefined,
+        )
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(300)
+    : await db
+        .select({
+          e: orderEvents,
+          quem: users.name,
+          papel: users.role,
+          pedidoId: orders.id,
+          pedidoNumero: orders.number,
+        })
+        .from(orderEvents)
+        .leftJoin(users, eq(orderEvents.actorId, users.id))
+        .leftJoin(orders, eq(orderEvents.orderId, orders.id))
+        .where(condicoes.length ? and(...condicoes) : undefined)
+        .orderBy(desc(orderEvents.createdAt))
+        .limit(300);
 
   return (
     <div>
@@ -76,8 +115,9 @@ export default async function PaginaAuditoria({
         <div>
           <h1 className="font-display text-2xl">Auditoria</h1>
           <p className="mt-1 text-sm text-tinta-70">
-            Registo das acções sobre pedidos, pagamentos, provas, entregas e cauções — quem
-            fez, o quê e quando. Mostramos os {registos.length} registos mais recentes.
+            Registo das acções sobre pedidos, pagamentos, provas, entregas,
+            cauções, catálogo, conteúdos e permissões — quem fez, o quê e
+            quando. Mostramos os {registos.length} registos mais recentes.
           </p>
         </div>
 
@@ -101,7 +141,11 @@ export default async function PaginaAuditoria({
           return (
             <Link
               key={t.valor || "tudo"}
-              href={t.valor ? `/admin/auditoria?tipo=${t.valor}` : "/admin/auditoria"}
+              href={
+                t.valor
+                  ? `/admin/auditoria?tipo=${t.valor}`
+                  : "/admin/auditoria"
+              }
               className={`border-b-2 px-3 py-2 text-sm ${
                 ativo
                   ? "border-ouro text-ouro-escuro"
@@ -133,16 +177,26 @@ export default async function PaginaAuditoria({
             <tbody>
               {registos.map(({ e, quem, papel, pedidoId, pedidoNumero }) => (
                 <tr key={e.id}>
-                  <td className="whitespace-nowrap text-xs">{formatDateTime(e.createdAt)}</td>
+                  <td className="whitespace-nowrap text-xs">
+                    {formatDateTime(e.createdAt)}
+                  </td>
                   <td>
-                    <span className={`selo ${COR_DO_TIPO[e.type] ?? "tom-neutro"}`}>
+                    <span
+                      className={`selo ${COR_DO_TIPO[e.type] ?? "tom-neutro"}`}
+                    >
                       {e.type}
                     </span>
                   </td>
                   <td className="max-w-[34rem] text-sm">{e.message}</td>
                   <td className="text-xs">
-                    {quem ?? <span className="text-tinta-50">sistema / cliente</span>}
-                    {papel && <span className="block text-tinta-50">{PAPEL[papel]}</span>}
+                    {quem ?? (
+                      <span className="text-tinta-50">sistema / cliente</span>
+                    )}
+                    {papel && (
+                      <span className="block text-tinta-50">
+                        {PAPEL[papel]}
+                      </span>
+                    )}
                   </td>
                   <td className="text-xs whitespace-nowrap">
                     {pedidoId ? (
@@ -164,7 +218,8 @@ export default async function PaginaAuditoria({
       )}
 
       <p className="mt-6 text-xs text-tinta-50">
-        O registo é imutável: as acções são acrescentadas, nunca alteradas nem apagadas.
+        O registo é imutável: as acções são acrescentadas, nunca alteradas nem
+        apagadas.
       </p>
     </div>
   );

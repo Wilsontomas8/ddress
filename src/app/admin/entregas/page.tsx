@@ -5,7 +5,7 @@ import { orderItems, orders } from "@/db/schema";
 import { exigirAcesso } from "@/lib/guarda";
 import AccoesEntrega from "@/components/admin/AccoesEntrega";
 import { addDays, formatNumericDate, today } from "@/lib/dates";
-import { podeVer } from "@/lib/permissoes";
+import { podeVerNa } from "@/lib/permissoes";
 import { formatKz } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export default async function PaginaEntregas() {
   const hoje = today();
 
   // O motorista não vê valores: só o que precisa para entregar e recolher.
-  const veValores = podeVer(eu.role, "pedidos");
+  const veValores = podeVerNa(eu.matriz, "pedidos");
 
   const [paraEntregar, paraRecolher] = await Promise.all([
     db

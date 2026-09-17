@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPedidoPorNumero } from "@/lib/pedidos";
+import { db } from "@/db";
+import { serviceRequests } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { ESTADO_SOLICITACAO, ROTULO_SOLICITACAO, type EstadoDeSolicitacao, type TipoDeSolicitacao } from "@/lib/solicitacoes-rotulos";
+import { ligacaoWhatsApp } from "@/lib/whatsapp";
 import { getSettings } from "@/lib/settings";
 import { formatKz } from "@/lib/money";
 import { formatDateTime, formatNumericDate } from "@/lib/dates";
@@ -27,6 +32,7 @@ export default async function PaginaPedido({
 
   const loja = await getSettings();
   const { pedido, itens, marcacoes } = dados;
+  const solicitacoes = await db.select().from(serviceRequests).where(eq(serviceRequests.orderId, pedido.id));
   const estado = ESTADO_PEDIDO[pedido.status];
   const pagamento = ESTADO_PAGAMENTO[pedido.paymentStatus];
 
@@ -232,7 +238,35 @@ export default async function PaginaPedido({
           </div>
         )}
 
+        {solicitacoes.length > 0 && (
+          <div className="mt-8 border-t border-marfim-200 pt-6">
+            <h2 className="font-display text-lg">Complete o look</h2>
+            <ul className="mt-3 space-y-2 text-sm">
+              {solicitacoes.map((s) => {
+                const e = ESTADO_SOLICITACAO[s.status as EstadoDeSolicitacao];
+                return (
+                  <li key={s.id} className="flex flex-wrap items-center gap-3">
+                    <span className="num font-medium">{s.code}</span>
+                    <span>{ROTULO_SOLICITACAO[s.type as TipoDeSolicitacao]}</span>
+                    {e && <span className={`selo ${e.cor}`}>{e.label}</span>}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
         <div className="mt-8 flex flex-wrap gap-3 border-t border-marfim-200 pt-6">
+          {ligacaoWhatsApp(loja.whatsapp) && (
+            <a
+              href={ligacaoWhatsApp(loja.whatsapp, `Olá DDRESS! Acabei de fazer o pedido ${pedido.number} no site.`)!}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-principal"
+            >
+              Avisar a loja por WhatsApp
+            </a>
+          )}
           <Link href="/loja" className="btn btn-contorno">
             Continuar a ver peças
           </Link>

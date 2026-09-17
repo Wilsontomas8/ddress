@@ -8,6 +8,10 @@ import BotaoSair from "@/components/BotaoSair";
 import { formatKz } from "@/lib/money";
 import { formatNumericDate } from "@/lib/dates";
 import { ESTADO_MARCACAO, ESTADO_PAGAMENTO, ESTADO_PEDIDO } from "@/lib/labels";
+import { serviceRequests } from "@/db/schema";
+import { avisosDoCliente } from "@/lib/notificacoes";
+import { formatDateTime } from "@/lib/dates";
+import { ESTADO_SOLICITACAO, ROTULO_SOLICITACAO, type EstadoDeSolicitacao, type TipoDeSolicitacao } from "@/lib/solicitacoes-rotulos";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "A minha conta" };
@@ -21,6 +25,11 @@ export default async function PaginaConta() {
     .from(orders)
     .where(eq(orders.userId, utilizador.id))
     .orderBy(desc(orders.createdAt));
+
+  const [avisos, minhasSolicitacoes] = await Promise.all([
+    avisosDoCliente(utilizador.id),
+    db.select().from(serviceRequests).where(eq(serviceRequests.userId, utilizador.id)).orderBy(desc(serviceRequests.createdAt)),
+  ]);
 
   const minhasMarcacoes = await db
     .select()
@@ -52,6 +61,54 @@ export default async function PaginaConta() {
         </div>
         <BotaoSair />
       </div>
+
+      {/* ------------------------------------------------- avisos */}
+      <section className="mt-12" aria-labelledby="titulo-avisos">
+        <h2 id="titulo-avisos" className="font-display text-xl">
+          Avisos
+        </h2>
+        {avisos.length === 0 ? (
+          <p className="mt-3 text-sm text-tinta-70">Ainda não tem avisos. Quando fizer um pedido, as novidades aparecem aqui.</p>
+        ) : (
+          <ul className="cartao mt-4 divide-y divide-marfim-200">
+            {avisos.map((a) => (
+              <li key={a.id} className="p-4 text-sm">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  {a.link ? (
+                    <Link href={a.link} className="font-medium hover:underline">
+                      {a.title}
+                    </Link>
+                  ) : (
+                    <span className="font-medium">{a.title}</span>
+                  )}
+                  <span className="text-xs text-tinta-50">{formatDateTime(a.createdAt)}</span>
+                </div>
+                <p className="mt-1 whitespace-pre-line text-tinta-70">{a.body}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* ------------------------------------------------- solicitações */}
+      {minhasSolicitacoes.length > 0 && (
+        <section className="mt-12">
+          <h2 className="font-display text-xl">Maquilhagem e sapatos</h2>
+          <ul className="cartao mt-4 divide-y divide-marfim-200">
+            {minhasSolicitacoes.map((s) => {
+              const e = ESTADO_SOLICITACAO[s.status as EstadoDeSolicitacao];
+              return (
+                <li key={s.id} className="flex flex-wrap items-center gap-3 p-4 text-sm">
+                  <span className="num font-medium">{s.code}</span>
+                  <span>{ROTULO_SOLICITACAO[s.type as TipoDeSolicitacao]}</span>
+                  {s.eventDate && <span className="text-tinta-50">{formatNumericDate(s.eventDate)}</span>}
+                  {e && <span className={`selo ml-auto ${e.cor}`}>{e.label}</span>}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {/* ------------------------------------------------- marcações */}
       <section className="mt-12">

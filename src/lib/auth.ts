@@ -5,7 +5,8 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db, ehBaseEmbutida } from "@/db";
 import { users, type Role } from "@/db/schema";
-import { ehPerfilDeEquipa, podeVer, type Seccao } from "./permissoes";
+import { ehPerfilDeEquipa, podeEditarNa, podeVerNa, type Nivel, type Seccao } from "./permissoes";
+import { matrizDoPerfil } from "./permissoes-servidor";
 
 export const COOKIE_NAME = "wil_sessao";
 const DURACAO_DIAS = 30;
@@ -132,12 +133,21 @@ export async function exigirEquipa() {
   return user;
 }
 
-/** Para rotas e acções por secção do painel. */
-export async function exigirSeccao(seccao: Seccao) {
+/**
+ * Para rotas e acções por secção do painel. Por omissão exige poder ver;
+ * acções que gravam pedem "editar". Aceita várias secções: basta uma.
+ */
+export async function exigirSeccao(seccao: Seccao | Seccao[], nivel: Exclude<Nivel, "nenhum"> = "ver") {
   const user = await getUtilizador();
   if (!user) throw new RespostaDeErro("Precisa de iniciar sessão.", 401);
-  if (!podeVer(user.role, seccao)) {
-    throw new RespostaDeErro("O seu perfil não tem acesso a esta área.", 403);
+  const matriz = await matrizDoPerfil(user.role);
+  const seccoes = Array.isArray(seccao) ? seccao : [seccao];
+  const permitido = seccoes.some((s) => (nivel === "editar" ? podeEditarNa(matriz, s) : podeVerNa(matriz, s)));
+  if (!permitido) {
+    throw new RespostaDeErro(
+      nivel === "editar" ? "O seu perfil só pode consultar esta área." : "O seu perfil não tem acesso a esta área.",
+      403
+    );
   }
   return user;
 }

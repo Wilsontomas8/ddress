@@ -21,41 +21,48 @@ import {
   UserCog,
   Users,
   X,
+  Sparkles,
+  GalleryVerticalEnd,
+  FileText,
+  Handshake,
+  KeyRound,
   type LucideIcon,
 } from "lucide-react";
-import { PERMISSOES, type Seccao } from "@/lib/permissoes";
-import type { Role } from "@/db/schema";
+import { RECURSOS, type Recurso } from "@/lib/permissoes";
 
 type Props = {
-  papel: Role;
+  /** Recursos que este perfil pode ver (decididos no servidor) */
+  visiveis: Recurso[];
   papelTexto: string;
   nome: string;
   email: string;
-  contadores: Partial<Record<Seccao, number>>;
+  contadores: Partial<Record<Recurso, number>>;
   alertas: number;
+  avisosHref?: string;
   children: React.ReactNode;
 };
 
-const SECCOES: Record<Seccao, { href: string; texto: string; icone: LucideIcon; exato?: boolean }> = {
-  resumo: { href: "/admin", texto: "Resumo", icone: LayoutDashboard, exato: true },
-  pedidos: { href: "/admin/pedidos", texto: "Pedidos", icone: ShoppingBag },
-  provas: { href: "/admin/marcacoes", texto: "Provas", icone: CalendarClock },
-  alugueres: { href: "/admin/alugueres", texto: "Alugueres", icone: Repeat },
-  entregas: { href: "/admin/entregas", texto: "Entregas", icone: Truck },
-  produtos: { href: "/admin/produtos", texto: "Peças", icone: Shirt },
-  clientes: { href: "/admin/clientes", texto: "Clientes", icone: Users },
-  relatorios: { href: "/admin/relatorios", texto: "Relatórios", icone: ChartColumn },
-  auditoria: { href: "/admin/auditoria", texto: "Auditoria", icone: ShieldCheck },
-  equipa: { href: "/admin/equipa", texto: "Equipa", icone: UserCog },
-  definicoes: { href: "/admin/definicoes", texto: "Definições", icone: Settings },
+const ICONES: Record<Recurso, LucideIcon> = {
+  resumo: LayoutDashboard,
+  pedidos: ShoppingBag,
+  provas: CalendarClock,
+  alugueres: Repeat,
+  entregas: Truck,
+  solicitacoes: Sparkles,
+  notificacoes: Bell,
+  produtos: Shirt,
+  colecoes: GalleryVerticalEnd,
+  conteudos: FileText,
+  parceiros: Handshake,
+  clientes: Users,
+  relatorios: ChartColumn,
+  auditoria: ShieldCheck,
+  equipa: UserCog,
+  permissoes: KeyRound,
+  definicoes: Settings,
 };
 
-/** Grupos da barra lateral: operação diária em cima, gestão em baixo */
-const GRUPOS: { titulo: string; seccoes: Seccao[] }[] = [
-  { titulo: "Operação", seccoes: ["resumo", "pedidos", "provas", "alugueres", "entregas"] },
-  { titulo: "Catálogo e clientes", seccoes: ["produtos", "clientes"] },
-  { titulo: "Gestão", seccoes: ["relatorios", "auditoria", "equipa", "definicoes"] },
-];
+const GRUPOS = [...new Set(RECURSOS.map((r) => r.grupo))];
 
 function iniciais(nome: string) {
   return nome
@@ -66,7 +73,7 @@ function iniciais(nome: string) {
     .join("");
 }
 
-export default function PainelShell({ papel, papelTexto, nome, email, contadores, alertas, children }: Props) {
+export default function PainelShell({ visiveis, papelTexto, nome, email, contadores, alertas, avisosHref = "/admin", children }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const [menuAberto, setMenuAberto] = useState(false);
@@ -75,8 +82,7 @@ export default function PainelShell({ papel, papelTexto, nome, email, contadores
 
   useEffect(() => setMenuAberto(false), [pathname]);
 
-  const minhas = PERMISSOES[papel] ?? [];
-  const podePesquisarPedidos = minhas.includes("pedidos");
+  const podePesquisarPedidos = visiveis.includes("pedidos");
 
   async function sair() {
     setASair(true);
@@ -100,17 +106,17 @@ export default function PainelShell({ papel, papelTexto, nome, email, contadores
       </div>
 
       <nav aria-label="Secções do painel" className="flex-1 overflow-y-auto px-3 pb-6">
-        {GRUPOS.map((g) => {
-          const visiveis = g.seccoes.filter((s) => minhas.includes(s));
-          if (visiveis.length === 0) return null;
+        {GRUPOS.map((grupo) => {
+          const doGrupo = RECURSOS.filter((r) => r.grupo === grupo && visiveis.includes(r.chave));
+          if (doGrupo.length === 0) return null;
           return (
-            <div key={g.titulo} className="mt-5 first:mt-2">
-              <p className="px-3 pb-2 text-[0.625rem] font-semibold tracking-[0.14em] text-tinta-50 uppercase">{g.titulo}</p>
+            <div key={grupo} className="mt-5 first:mt-2">
+              <p className="px-3 pb-2 text-[0.625rem] font-semibold tracking-[0.14em] text-tinta-50 uppercase">{grupo}</p>
               <ul className="space-y-0.5">
-                {visiveis.map((chave) => {
-                  const s = SECCOES[chave];
-                  const Icone = s.icone;
-                  const ativo = s.exato ? pathname === s.href : pathname.startsWith(s.href);
+                {doGrupo.map((s) => {
+                  const chave = s.chave;
+                  const Icone = ICONES[chave];
+                  const ativo = chave === "resumo" ? pathname === s.href : pathname.startsWith(s.href);
                   const n = contadores[chave];
                   return (
                     <li key={chave}>
@@ -220,7 +226,7 @@ export default function PainelShell({ papel, papelTexto, nome, email, contadores
 
             <div className="ml-auto flex items-center gap-2">
               <Link
-                href="/admin"
+                href={avisosHref}
                 className="relative flex h-10 w-10 items-center justify-center rounded-full border border-marfim-200 text-tinta-70 transition-colors hover:text-tinta"
                 aria-label={alertas > 0 ? `${alertas} assunto(s) a precisar de atenção` : "Sem alertas"}
               >

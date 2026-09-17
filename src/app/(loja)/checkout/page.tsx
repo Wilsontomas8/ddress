@@ -2,12 +2,13 @@ import Link from "next/link";
 import FormularioCheckout from "@/components/FormularioCheckout";
 import { getUtilizador } from "@/lib/auth";
 import { getSettings } from "@/lib/settings";
+import { listarParceiros } from "@/lib/conteudos";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Finalizar pedido" };
 
 export default async function PaginaCheckout() {
-  const [loja, utilizador] = await Promise.all([getSettings(), getUtilizador()]);
+  const [loja, utilizador, parceiros] = await Promise.all([getSettings(), getUtilizador(), listarParceiros({ servico: "MAQUILHAGEM" })]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
@@ -37,6 +38,7 @@ export default async function PaginaCheckout() {
             phone: loja.phone,
           }}
           cartaoAtivo={Boolean(process.env.STRIPE_SECRET_KEY)}
+          parceiros={parceiros.map((x) => ({ id: x.id, name: x.name }))}
           utilizador={
             utilizador
               ? {

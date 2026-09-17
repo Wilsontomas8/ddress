@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUtilizador } from "@/lib/auth";
-import { ACCOES } from "@/lib/permissoes";
+import { podeVerNa } from "@/lib/permissoes";
+import { matrizDoPerfil } from "@/lib/permissoes-servidor";
 import { mesAtual, relatorioMensal, relatorioParaCSV } from "@/lib/relatorios";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +9,7 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/relatorios?mes=2026-09
  * Exporta o relatório mensal em CSV (abre directamente no Excel).
- * Só administrador e contabilista.
+ * Só quem pode ver Relatórios (por padrão: administrador e contabilista).
  */
 export async function GET(request: Request) {
   const utilizador = await getUtilizador();
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
   if (!utilizador) {
     return NextResponse.json({ erro: "Precisa de iniciar sessão." }, { status: 401 });
   }
-  if (!ACCOES.exportarFinanceiro(utilizador.role)) {
+  if (!podeVerNa(await matrizDoPerfil(utilizador.role), "relatorios")) {
     return NextResponse.json(
       { erro: "O seu perfil não pode exportar dados financeiros." },
       { status: 403 }

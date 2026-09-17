@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useCarrinho } from "./Carrinho";
 import { formatKz } from "@/lib/money";
 import { DIAS_SEMANA, MESES, parseDay } from "@/lib/dates";
+import EscolherSapatos from "./EscolherSapatos";
 
 type Metodo = "MULTICAIXA_EXPRESS" | "TRANSFERENCIA" | "NA_ENTREGA" | "CARTAO";
 
@@ -21,9 +22,11 @@ type Props = {
   };
   cartaoAtivo: boolean;
   utilizador: { nome: string; email: string; telefone: string; morada: string } | null;
+  /** Maquilhadoras parceiras que a cliente pode pedir com a encomenda */
+  parceiros: { id: string; name: string }[];
 };
 
-export default function FormularioCheckout({ loja, cartaoAtivo, utilizador }: Props) {
+export default function FormularioCheckout({ loja, cartaoAtivo, utilizador, parceiros }: Props) {
   const router = useRouter();
   const { itens, carregado, subtotal, caucaoTotal, limpar } = useCarrinho();
 
@@ -37,6 +40,17 @@ export default function FormularioCheckout({ loja, cartaoAtivo, utilizador }: Pr
   const [metodo, setMetodo] = useState<Metodo>("MULTICAIXA_EXPRESS");
   const [referencia, setReferencia] = useState("");
   const [nota, setNota] = useState("");
+  // Complete o look
+  const [querMaquilhagem, setQuerMaquilhagem] = useState(false);
+  const [parceiroId, setParceiroId] = useState(parceiros[0]?.id ?? "");
+  const [dataMaquilhagem, setDataMaquilhagem] = useState("");
+  const [horaMaquilhagem, setHoraMaquilhagem] = useState("");
+  const [localMaquilhagem, setLocalMaquilhagem] = useState("");
+  const [notaMaquilhagem, setNotaMaquilhagem] = useState("");
+  const [querSapatos, setQuerSapatos] = useState(false);
+  const [tamanhoSapatos, setTamanhoSapatos] = useState("");
+  const [notaSapatos, setNotaSapatos] = useState("");
+  const [sapatos, setSapatos] = useState<string[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [aEnviar, setAEnviar] = useState(false);
 
@@ -90,6 +104,10 @@ export default function FormularioCheckout({ loja, cartaoAtivo, utilizador }: Pr
       );
       return;
     }
+    if (querMaquilhagem && !dataMaquilhagem) {
+      setErro("Indique o dia da maquilhagem.");
+      return;
+    }
     if (entrega === "DOMICILIO" && morada.trim().length < 8) {
       setErro("Indique a morada de entrega.");
       return;
@@ -129,6 +147,12 @@ export default function FormularioCheckout({ loja, cartaoAtivo, utilizador }: Pr
           declaracaoAceite: declaracao,
           referenciaPagamento: pedeReferencia ? referencia.trim() || undefined : undefined,
           nota: nota.trim() || undefined,
+          extras: {
+            maquilhagem: querMaquilhagem
+              ? { parceiroId, data: dataMaquilhagem, hora: horaMaquilhagem, local: localMaquilhagem.trim(), notas: notaMaquilhagem.trim() }
+              : undefined,
+            sapatos: querSapatos ? { tamanho: tamanhoSapatos.trim(), notas: notaSapatos.trim(), produtos: sapatos } : undefined,
+          },
           itens: itens.map((i) => ({
             variantId: i.variantId,
             tipo: i.tipo,
@@ -374,6 +398,81 @@ export default function FormularioCheckout({ loja, cartaoAtivo, utilizador }: Pr
               </span>
             </label>
           )}
+        </section>
+
+        {/* --------------------------------------------- complete o look */}
+        <section>
+          <h2 className="font-display text-xl">Complete o look</h2>
+          <p className="mt-1 text-sm text-tinta-70">Opcional. A loja recebe o pedido junto com a encomenda e confirma consigo.</p>
+
+          {parceiros.length > 0 && (
+            <div className="mt-4 border border-marfim-300 bg-superficie p-4">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input type="checkbox" className="mt-1" checked={querMaquilhagem} onChange={(e) => setQuerMaquilhagem(e.target.checked)} />
+                <span>
+                  <span className="block font-medium">Quero maquilhagem com a nossa parceira</span>
+                  <span className="block text-sm text-tinta-70">{parceiros.map((p) => p.name).join(" · ")}</span>
+                </span>
+              </label>
+              {querMaquilhagem && (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  {parceiros.length > 1 && (
+                    <label className="block sm:col-span-2">
+                      <span className="etiqueta">Maquilhadora</span>
+                      <select className="campo" value={parceiroId} onChange={(e) => setParceiroId(e.target.value)}>
+                        {parceiros.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  <label className="block">
+                    <span className="etiqueta">Dia</span>
+                    <input type="date" className="campo" value={dataMaquilhagem} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setDataMaquilhagem(e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="etiqueta">Hora (opcional)</span>
+                    <input type="time" className="campo" value={horaMaquilhagem} onChange={(e) => setHoraMaquilhagem(e.target.value)} />
+                  </label>
+                  <label className="block sm:col-span-2">
+                    <span className="etiqueta">Local (opcional)</span>
+                    <input className="campo" value={localMaquilhagem} onChange={(e) => setLocalMaquilhagem(e.target.value)} placeholder="Talatona, Luanda" />
+                  </label>
+                  <label className="block sm:col-span-2">
+                    <span className="etiqueta">O que imagina (opcional)</span>
+                    <textarea className="campo" rows={2} value={notaMaquilhagem} onChange={(e) => setNotaMaquilhagem(e.target.value)} placeholder="Maquilhagem suave, cabelo apanhado…" />
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="mt-3 border border-marfim-300 bg-superficie p-4">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" className="mt-1" checked={querSapatos} onChange={(e) => setQuerSapatos(e.target.checked)} />
+              <span>
+                <span className="block font-medium">Quero sapatos para combinar</span>
+                <span className="block text-sm text-tinta-70">Escolha modelos ou deixe a loja sugerir.</span>
+              </span>
+            </label>
+            {querSapatos && (
+              <div className="mt-4 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-[8rem_1fr]">
+                  <label className="block">
+                    <span className="etiqueta">Tamanho</span>
+                    <input className="campo" inputMode="numeric" value={tamanhoSapatos} onChange={(e) => setTamanhoSapatos(e.target.value)} placeholder="38" />
+                  </label>
+                  <label className="block">
+                    <span className="etiqueta">Preferências (opcional)</span>
+                    <input className="campo" value={notaSapatos} onChange={(e) => setNotaSapatos(e.target.value)} placeholder="Salto baixo, dourado…" />
+                  </label>
+                </div>
+                <EscolherSapatos escolhidos={sapatos} onChange={setSapatos} />
+              </div>
+            )}
+          </div>
         </section>
 
         {/* ---------------------------------------------------- nota */}

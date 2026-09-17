@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { PERFIS_DE_EQUIPA, paginaInicialDoPerfil } from "@/lib/permissoes";
-import type { Role } from "@/db/schema";
 
 export default function FormularioEntrar() {
   const router = useRouter();
   const params = useSearchParams();
-  const destino = params.get("destino");
+  // Só caminhos internos: um "destino" externo levaria para fora do site.
+  const pedido = params.get("destino");
+  const destino = pedido && pedido.startsWith("/") && !pedido.startsWith("//") ? pedido : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,10 +31,8 @@ export default function FormularioEntrar() {
         setErro(dados.erro ?? "Não foi possível entrar.");
         return;
       }
-      // Cada perfil entra directamente na sua própria área.
-      const papel = dados.role as Role;
-      const equipa = PERFIS_DE_EQUIPA.includes(papel);
-      router.push(destino ?? (equipa ? paginaInicialDoPerfil(papel) : "/conta"));
+      // Cada perfil entra directamente na sua área, decidida no servidor.
+      router.push(destino ?? dados.destino ?? "/conta");
       router.refresh();
     } catch {
       setErro("Não foi possível falar com o servidor.");

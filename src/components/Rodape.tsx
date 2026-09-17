@@ -15,6 +15,7 @@ const COLUNAS = [
   {
     titulo: "Colecção",
     ligacoes: [
+      { href: "/colecoes", texto: "Colecções" },
       { href: "/loja/mulher", texto: "Mulher" },
       { href: "/loja/homem", texto: "Homem" },
       { href: "/loja/crianca", texto: "Criança" },
@@ -24,6 +25,8 @@ const COLUNAS = [
   {
     titulo: "Ateliê",
     ligacoes: [
+      { href: "/quem-somos", texto: "Quem somos" },
+      { href: "/maquilhagem", texto: "Maquilhagem e sapatos" },
       { href: "/marcacao", texto: "Marcar prova" },
       { href: "/como-funciona", texto: "Como funciona o aluguer" },
       { href: "/acompanhar", texto: "Acompanhar pedido" },
@@ -104,12 +107,8 @@ export default function Rodape({ loja }: Props) {
           </div>
         </div>
 
-        {/* Assinatura em escala de página, como remate */}
-        <div className="mt-20 border-t border-white/10 pt-10" aria-hidden="true">
-          <p className="texto-ouro font-display text-[clamp(4rem,17vw,15rem)] leading-[0.8] tracking-[0.04em] select-none">DDRESS</p>
-        </div>
 
-        <div className="mt-10 flex flex-col gap-2 text-xs text-marfim-400 sm:flex-row sm:justify-between">
+        <div className="mt-16 flex flex-col gap-2 border-t border-white/10 pt-8 text-xs text-marfim-400 sm:flex-row sm:justify-between">
           <p>
             © {ano} {loja.storeName}. Todos os direitos reservados.
           </p>

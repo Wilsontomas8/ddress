@@ -28,7 +28,7 @@ import { formatKz } from "@/lib/money";
 import { MESES, addDays, formatDateTime, formatNumericDate, today } from "@/lib/dates";
 import { ESTADO_MARCACAO, ESTADO_PEDIDO } from "@/lib/labels";
 import { exigirAcesso } from "@/lib/guarda";
-import { PERMISSOES } from "@/lib/permissoes";
+import { recursosVisiveis } from "@/lib/permissoes";
 import { avaliarReservasPendentes } from "@/lib/reservas";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +63,7 @@ function variacao(actual: number, anterior: number): number | null {
 
 export default async function PainelResumo() {
   const eu = await exigirAcesso("resumo");
-  const minhas = PERMISSOES[eu.role] ?? [];
+  const minhas = recursosVisiveis(eu.matriz);
 
   const hoje = today();
   const inicioDoMes = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), 1));

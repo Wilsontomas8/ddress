@@ -37,6 +37,9 @@ const silhuetas = {
            <circle cx="450" cy="470" r="9" />
            <circle cx="450" cy="560" r="9" />`,
   calcas: `<path d="M350 280 L550 280 L575 900 L480 900 L450 520 L420 900 L325 900 Z" />`,
+  sapato: `<path d="M230 760 Q300 700 420 690 L560 560 Q600 520 640 540 L668 620 Q672 700 640 760 L640 900 L610 900 L604 790 Q520 800 420 830 Q300 860 240 850 Q200 840 230 760 Z" />
+            <path d="M604 790 L610 900" fill="none" stroke-width="10" />
+            <path d="M300 740 Q380 720 440 700" fill="none" stroke-width="4" />`,
   conjunto: `<path d="M330 280 L450 250 L570 280 L600 460 L545 475 L545 560 L355 560 L355 475 L300 460 Z" />
              <path d="M360 590 L540 590 L560 900 L480 900 L450 700 L420 900 L340 900 Z" />`,
 };
@@ -75,6 +78,11 @@ const pecas = [
   ["crianca-vestido-dama", "vestido", "marfim", "Vestido Dama de Honor"],
   ["crianca-casaco-chuva", "casaco", "esmeralda", "Casaco Impermeável"],
   ["crianca-conjunto-desporto", "conjunto", "azul", "Conjunto Desportivo"],
+  // Sapatos
+  ["sapatos-sandalia-dourada", "sapato", "ouro", "Sandália Dourada"],
+  ["sapatos-scarpin-preto", "sapato", "noite", "Scarpin Preto"],
+  ["sapatos-sandalia-prata", "sapato", "azul", "Sandália Prateada"],
+  ["sapatos-scarpin-nude", "sapato", "areia", "Scarpin Nude"],
 ];
 
 const PALETAS_CLARAS = new Set(["marfim", "areia"]);

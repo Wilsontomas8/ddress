@@ -8,6 +8,13 @@
       "when": 1789639380986,
       "tag": "0000_inicial",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789651826545,
+      "tag": "0001_coleccoes_conteudos_servicos_permissoes",
+      "breakpoints": true
     }
   ]
 }

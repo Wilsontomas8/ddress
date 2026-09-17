@@ -6,6 +6,8 @@ import { getProduto, listarProdutos } from "@/lib/catalogo";
 import { labelSeccao, slugDaSeccao } from "@/lib/labels";
 import { toISODay } from "@/lib/dates";
 import { getSettings } from "@/lib/settings";
+import { colecoesDoProduto, sugestoesDe } from "@/lib/conteudos";
+import EscolherSapatos from "@/components/EscolherSapatos";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +27,12 @@ export default async function PaginaProduto({ params }: { params: Promise<{ slug
   if (!dados) notFound();
 
   const { produto, categoria, imagens, variantes } = dados;
-  const loja = await getSettings();
+  const [loja, sapatosSugeridos, colecoes] = await Promise.all([
+    getSettings(),
+    sugestoesDe(produto.id),
+    colecoesDoProduto(produto.id),
+  ]);
+  const ehSapato = categoria.slug === "sapatos";
 
   const relacionados = (
     await listarProdutos({ seccao: produto.section, categoriaSlug: categoria.slug, limite: 5 })
@@ -93,6 +100,16 @@ export default async function PaginaProduto({ params }: { params: Promise<{ slug
             {produto.brand ? ` · ${produto.brand}` : ""}
           </p>
           <h1 className="regua mt-2 font-display text-3xl sm:text-4xl">{produto.name}</h1>
+          {colecoes.length > 0 && (
+            <p className="mt-4 flex flex-wrap items-center gap-2 text-xs text-tinta-50">
+              Colecção
+              {colecoes.map((c) => (
+                <Link key={c.id} href={`/colecoes/${c.slug}`} className="chip min-h-0 px-3 py-1 text-xs">
+                  {c.name}
+                </Link>
+              ))}
+            </p>
+          )}
 
           <p className="mt-6 text-[0.95rem] leading-relaxed text-tinta-70">
             {produto.description}
@@ -149,6 +166,47 @@ export default async function PaginaProduto({ params }: { params: Promise<{ slug
           </div>
         </div>
       </div>
+
+      {/* ------------------------------------------------ complete o look */}
+      {!ehSapato && (
+        <section className="border-y border-marfim-200 bg-marfim-100/60">
+          <div className="mx-auto max-w-7xl px-4 py-16">
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <div>
+                <p className="rotulo text-tinta-50">Complete o look</p>
+                <h2 className="mt-3 font-display text-3xl sm:text-4xl">
+                  {sapatosSugeridos.length > 0 ? "Sapatos que combinam" : "Sapatos DDRESS"}
+                </h2>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Link href="/maquilhagem" className="btn btn-contorno btn-sm">
+                  Pedir maquilhagem
+                </Link>
+                <Link href="/maquilhagem#sapatos" className="btn btn-escuro btn-sm">
+                  Pedir sugestão de sapatos
+                </Link>
+              </div>
+            </div>
+
+            {sapatosSugeridos.length > 0 && (
+              <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-4">
+                {sapatosSugeridos.map((p) => (
+                  <CartaoProduto key={p.id} produto={p} />
+                ))}
+              </div>
+            )}
+
+            <details className="group mt-10">
+              <summary className="cursor-pointer text-sm font-medium text-tinta underline-offset-4 hover:underline">
+                Procurar outros sapatos
+              </summary>
+              <div className="mt-5">
+                <EscolherSapatos modo="ver" />
+              </div>
+            </details>
+          </div>
+        </section>
+      )}
 
       {relacionados.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 pb-20">

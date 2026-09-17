@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { ehPerfilDeEquipa, paginaInicialDaMatriz } from "@/lib/permissoes";
+import { matrizDoPerfil } from "@/lib/permissoes-servidor";
 import { ZodError, z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -36,7 +38,8 @@ export async function POST(request: Request) {
       role: user.role,
     });
 
-    return NextResponse.json({ ok: true, role: user.role });
+    const destino = ehPerfilDeEquipa(user.role) ? paginaInicialDaMatriz(await matrizDoPerfil(user.role)) : "/conta";
+    return NextResponse.json({ ok: true, role: user.role, destino });
   } catch (e) {
     if (e instanceof ZodError) {
       return NextResponse.json({ erro: e.issues[0]?.message }, { status: 400 });

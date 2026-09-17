@@ -16,6 +16,13 @@ import type { BaseDeDados } from "./index";
 import {
   appointments,
   categories,
+  collectionProducts,
+  collections,
+  mediaItems,
+  pageHighlights,
+  pages,
+  partners,
+  productSuggestions,
   orderEvents,
   orderItems,
   orders,
@@ -101,6 +108,7 @@ const CATEGORIAS: { nome: string; slug: string; seccao: Section; pos: number }[]
   { nome: "Alfaiataria", slug: "alfaiataria", seccao: "MULHER", pos: 2 },
   { nome: "Blusas", slug: "blusas", seccao: "MULHER", pos: 3 },
   { nome: "Casacos", slug: "casacos", seccao: "MULHER", pos: 4 },
+  { nome: "Sapatos", slug: "sapatos", seccao: "MULHER", pos: 5 },
 
   { nome: "Cerimónia", slug: "cerimonia", seccao: "CRIANCA", pos: 1 },
   { nome: "Casacos", slug: "casacos", seccao: "CRIANCA", pos: 2 },
@@ -413,6 +421,91 @@ const PRODUTOS: DefProduto[] = [
       { tamanho: "8 anos", cor: "Cinzento", stockVenda: 5 },
     ],
   },
+  // ------------------------------ SAPATOS ------------------------------
+  {
+    nome: "Sandália Dourada de Salto",
+    slug: "sandalia-dourada-salto",
+    seccao: "MULHER",
+    categoria: "sapatos",
+    oferta: "AMBOS",
+    descricao: "Sandália de tiras finas em pele metalizada dourada, salto agulha de 10 cm. Combina com vestidos de gala em tons terra, preto e marfim.",
+    conservacao: "Guardar na caixa, com enchimento. Limpar com pano seco.",
+    imagem: "/img/sapatos-sandalia-dourada.svg",
+    precoVenda: 38000,
+    precoDia: 8000,
+    caucao: 24000,
+    diasHigienizacao: 1,
+    variantes: [
+      { tamanho: "36", cor: "Dourado", stockVenda: 2, stockAluguer: 1 },
+      { tamanho: "37", cor: "Dourado", stockVenda: 3, stockAluguer: 1 },
+      { tamanho: "38", cor: "Dourado", stockVenda: 3, stockAluguer: 1 },
+      { tamanho: "39", cor: "Dourado", stockVenda: 2, stockAluguer: 1 },
+      { tamanho: "40", cor: "Dourado", stockVenda: 1, stockAluguer: 1 },
+    ],
+  },
+  {
+    nome: "Scarpin Preto Clássico",
+    slug: "scarpin-preto-classico",
+    seccao: "MULHER",
+    categoria: "sapatos",
+    oferta: "AMBOS",
+    descricao: "Scarpin em camurça preta, bico fino e salto de 9 cm. O par certo para vestidos de noite e alfaiataria.",
+    conservacao: "Guardar na caixa, com enchimento. Limpar com pano seco.",
+    imagem: "/img/sapatos-scarpin-preto.svg",
+    precoVenda: 32000,
+    precoDia: 7000,
+    caucao: 21000,
+    diasHigienizacao: 1,
+    variantes: [
+      { tamanho: "36", cor: "Preto", stockVenda: 2, stockAluguer: 1 },
+      { tamanho: "37", cor: "Preto", stockVenda: 3, stockAluguer: 1 },
+      { tamanho: "38", cor: "Preto", stockVenda: 3, stockAluguer: 1 },
+      { tamanho: "39", cor: "Preto", stockVenda: 2, stockAluguer: 1 },
+      { tamanho: "40", cor: "Preto", stockVenda: 1, stockAluguer: 1 },
+    ],
+  },
+  {
+    nome: "Sandália Prateada com Brilho",
+    slug: "sandalia-prateada-brilho",
+    seccao: "MULHER",
+    categoria: "sapatos",
+    oferta: "AMBOS",
+    descricao: "Sandália com cristais aplicados e salto fino de 10 cm, para vestidos bordados e tons azuis ou prata.",
+    conservacao: "Guardar na caixa, com enchimento. Limpar com pano seco.",
+    imagem: "/img/sapatos-sandalia-prata.svg",
+    precoVenda: 41000,
+    precoDia: 9000,
+    caucao: 27000,
+    diasHigienizacao: 1,
+    variantes: [
+      { tamanho: "36", cor: "Prateado", stockVenda: 2, stockAluguer: 1 },
+      { tamanho: "37", cor: "Prateado", stockVenda: 3, stockAluguer: 1 },
+      { tamanho: "38", cor: "Prateado", stockVenda: 3, stockAluguer: 1 },
+      { tamanho: "39", cor: "Prateado", stockVenda: 2, stockAluguer: 1 },
+      { tamanho: "40", cor: "Prateado", stockVenda: 1, stockAluguer: 1 },
+    ],
+  },
+  {
+    nome: "Scarpin Nude",
+    slug: "scarpin-nude",
+    seccao: "MULHER",
+    categoria: "sapatos",
+    oferta: "AMBOS",
+    descricao: "Scarpin nude em pele envernizada, salto de 8 cm. Alonga a silhueta e acompanha qualquer cor de vestido.",
+    conservacao: "Guardar na caixa, com enchimento. Limpar com pano seco.",
+    imagem: "/img/sapatos-scarpin-nude.svg",
+    precoVenda: 30000,
+    precoDia: 6500,
+    caucao: 19500,
+    diasHigienizacao: 1,
+    variantes: [
+      { tamanho: "36", cor: "Nude", stockVenda: 2, stockAluguer: 1 },
+      { tamanho: "37", cor: "Nude", stockVenda: 3, stockAluguer: 1 },
+      { tamanho: "38", cor: "Nude", stockVenda: 3, stockAluguer: 1 },
+      { tamanho: "39", cor: "Nude", stockVenda: 2, stockAluguer: 1 },
+      { tamanho: "40", cor: "Nude", stockVenda: 1, stockAluguer: 1 },
+    ],
+  },
 ];
 
 // ------------------------------------------------------------------ run
@@ -440,7 +533,10 @@ export async function semear(
     TRUNCATE TABLE
       order_events, payments, rental_reservations, appointments,
       order_items, orders, product_images, product_variants,
-      products, categories, users, settings
+      products, categories, users, settings,
+      notifications, service_request_products, service_requests, partners,
+      product_suggestions, collection_products, collections, media_items,
+      page_highlights, pages, role_permissions, audit_logs
     RESTART IDENTITY CASCADE
   `);
 
@@ -450,8 +546,8 @@ export async function semear(
     id: "default",
     storeName: "DDRESS",
     tagline: "Aluguer e venda de vestidos",
-    phone: "+244 923 000 111",
-    whatsapp: "+244 923 000 111",
+    phone: "+244 923 033 861",
+    whatsapp: "+244 923 033 861",
     email: "atendimentoddress@gmail.com",
     address: "Rua Amílcar Cabral, 120 — Ingombota, Luanda",
     bankName: "Banco BAI",
@@ -617,6 +713,10 @@ export async function semear(
       n++;
     }
   }
+
+  // ------------------------------- conteúdos, colecções e parceiros
+  avisar("Quem somos, colecções, parceira de maquilhagem e sapatos sugeridos...");
+  await semearConteudos(db, varianteIds);
 
   // --------------------------------------------- histórico (6 meses)
   avisar("Histórico de vendas e alugueres dos últimos meses...");
@@ -1190,6 +1290,127 @@ async function semearHistorico(
   }
 
   return { total: planos.length, porAno };
+}
+
+// ------------------------------------------------------------ conteúdos
+
+const GALERIA_QUEM_SOMOS = Array.from({ length: 23 }, (_, i) => `/quem-somos/galeria/foto-${String(i + 1).padStart(2, "0")}.jpg`);
+
+/**
+ * Colecções iniciais. Os nomes e a arrumação são provisórios — a DDRESS
+ * define as colecções reais no painel (ou a partir do catálogo do WhatsApp).
+ */
+const COLECCOES = [
+  {
+    slug: "gala",
+    nome: "Gala",
+    tagline: "Bordados, brilho e caudas para as noites mais importantes.",
+    descricao: "Vestidos longos de cerimónia, trabalhados à mão, para casamentos, galas e pedidos de mão. Todas as peças podem ser provadas no ateliê.",
+    capa: "/quem-somos/galeria/foto-02.jpg",
+    video: "/video/ddress-colecao.mp4",
+    poster: "/video/ddress-colecao.jpg",
+    fotos: ["foto-01", "foto-02", "foto-06", "foto-07", "foto-08"],
+    produtos: ["vestido-gala-bordeaux", "vestido-cerimonia-dourado", "sandalia-dourada-salto", "sandalia-prateada-brilho"],
+  },
+  {
+    slug: "noite",
+    nome: "Noite",
+    tagline: "Preto, cristais e ombros marcados.",
+    descricao: "Silhuetas sereia e mangas estruturadas em preto profundo, com aplicações de pérolas e cristais.",
+    capa: "/quem-somos/galeria/foto-04.jpg",
+    video: null,
+    poster: null,
+    fotos: ["foto-03", "foto-04", "foto-05"],
+    produtos: ["blazer-alfaiataria-preto", "smoking-preto-gala", "scarpin-preto-classico"],
+  },
+  {
+    slug: "cerimonia",
+    nome: "Cerimónia",
+    tagline: "Rendas e tons de champanhe para o dia do sim — e para toda a família.",
+    descricao: "Vestidos em renda e tule para noivas, madrinhas e convidadas, e peças de cerimónia para homem e criança.",
+    capa: "/quem-somos/galeria/foto-09.jpg",
+    video: null,
+    poster: null,
+    fotos: ["foto-09", "foto-10"],
+    produtos: ["fato-classico-marfim", "fatinho-cerimonia-azul", "vestido-dama-honor", "scarpin-nude"],
+  },
+];
+
+const SUGESTOES_DE_SAPATOS: Record<string, string[]> = {
+  "vestido-gala-bordeaux": ["sandalia-dourada-salto", "scarpin-preto-classico", "scarpin-nude"],
+  "vestido-cerimonia-dourado": ["sandalia-dourada-salto", "scarpin-nude"],
+  "blazer-alfaiataria-preto": ["scarpin-preto-classico", "sandalia-prateada-brilho"],
+};
+
+async function semearConteudos(db: BaseDeDados, _varianteIds: Map<string, string>) {
+  // Quem somos
+  const paginaId = uid();
+  await db.insert(pages).values({
+    id: paginaId,
+    slug: "quem-somos",
+    title: "DDRESS — Aluguer e venda de vestidos",
+    subtitle: "Elegância é a arte do bem vestir",
+    body:
+      "A DDRESS nasceu em Luanda para que cada mulher possa viver os seus momentos mais especiais com a peça certa. No nosso ateliê encontra vestidos exclusivos, escolhidos um a um, para comprar ou para alugar — com prova marcada, ajustes e todo o acompanhamento de uma equipa que conhece cada peça.\n\nTrabalhamos para que alugar seja tão cuidado como comprar: cada vestido é verificado e higienizado depois de cada uso, e a recolha é por nossa conta.",
+  });
+  const destaques: [string, string][] = [
+    ["mulheres", "+ de 3000 mulheres atendidas"],
+    ["pecas", "+ 300 peças exclusivas com qualidade"],
+    ["recolha", "Serviço de recolha gratuito"],
+    ["telefone", "923 033 861"],
+  ];
+  await db.insert(pageHighlights).values(destaques.map(([icon, text], position) => ({ id: uid(), pageId: paginaId, icon, text, position })));
+  await db.insert(mediaItems).values([
+    { id: uid(), ownerType: "PAGINA", ownerId: paginaId, kind: "VIDEO", url: "/quem-somos/video.mp4", poster: "/quem-somos/video.jpg", title: "O ateliê DDRESS", position: 0 },
+    { id: uid(), ownerType: "PAGINA", ownerId: paginaId, kind: "IMAGEM", url: "/quem-somos/principal.jpg", title: "A equipa DDRESS", position: 1 },
+    ...GALERIA_QUEM_SOMOS.map((url, i) => ({ id: uid(), ownerType: "PAGINA", ownerId: paginaId, kind: "IMAGEM", url, title: "", position: i + 2 })),
+  ]);
+
+  // Colecções
+  for (const [i, c] of COLECCOES.entries()) {
+    const colecaoId = uid();
+    await db.insert(collections).values({
+      id: colecaoId,
+      name: c.nome,
+      slug: c.slug,
+      tagline: c.tagline,
+      description: c.descricao,
+      coverImage: c.capa,
+      heroVideo: c.video,
+      heroPoster: c.poster,
+      position: i,
+      featured: true,
+    });
+    await db.insert(mediaItems).values(
+      c.fotos.map((foto, position) => ({ id: uid(), ownerType: "COLECCAO", ownerId: colecaoId, kind: "IMAGEM", url: `/quem-somos/galeria/${foto}.jpg`, title: "", position }))
+    );
+    for (const [position, slug] of c.produtos.entries()) {
+      const productId = await produtoIdPorSlug(db, slug);
+      if (productId) await db.insert(collectionProducts).values({ collectionId: colecaoId, productId, position });
+    }
+  }
+
+  // Parceira de maquilhagem
+  await db.insert(partners).values({
+    id: uid(),
+    name: "Val Makeup Antoluv",
+    slug: "val-makeup-antoluv",
+    service: "MAQUILHAGEM",
+    description:
+      "Maquilhagem, cabeleireiro e estética. Parceira da DDRESS para noivas, madrinhas e convidadas: combine a maquilhagem com o vestido que escolheu.",
+    logoUrl: "/parceiros/val-makeup-antoluv.jpg",
+    instagram: "https://www.instagram.com/val_makeup.antoluv/",
+  });
+
+  // Sapatos sugeridos
+  for (const [produto, sugeridos] of Object.entries(SUGESTOES_DE_SAPATOS)) {
+    const productId = await produtoIdPorSlug(db, produto);
+    if (!productId) continue;
+    for (const [position, slug] of sugeridos.entries()) {
+      const suggestedProductId = await produtoIdPorSlug(db, slug);
+      if (suggestedProductId) await db.insert(productSuggestions).values({ productId, suggestedProductId, position });
+    }
+  }
 }
 
 /** Devolve o id do produto a partir do slug */

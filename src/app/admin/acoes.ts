@@ -31,11 +31,11 @@ import {
   type OrderStatus,
   type PaymentMethod,
 } from "@/db/schema";
-import { exigirAdmin, exigirEquipa, exigirSeccao, hashPassword } from "@/lib/auth";
-import { ACCOES } from "@/lib/permissoes";
+import { exigirAdmin, exigirSeccao, hashPassword } from "@/lib/auth";
 import { addDays, formatNumericDate, parseDay, today } from "@/lib/dates";
 import { ESTADO_PEDIDO, PROXIMOS_ESTADOS } from "@/lib/labels";
 import { libertarPedidoNaTransacao } from "@/lib/cancelamento";
+import { avisarMudancaDeEstado } from "@/lib/notificacoes";
 
 type Resultado = { ok: true; mensagem?: string } | { ok: false; erro: string };
 
@@ -82,7 +82,7 @@ function recarregarPedido(id: string) {
 
 /** O funcionário assume o pedido: fica responsável por ele. */
 export async function assumirPedido(orderId: string): Promise<Resultado> {
-  const eu = await exigirEquipa();
+  const eu = await exigirSeccao("pedidos", "editar");
 
   const [pedido] = await db.select().from(orders).where(eq(orders.id, orderId));
   if (!pedido) return { ok: false, erro: "Pedido não encontrado." };
@@ -110,7 +110,7 @@ export async function mudarEstadoPedido(
   orderId: string,
   novoEstado: OrderStatus
 ): Promise<Resultado> {
-  const eu = await exigirEquipa();
+  const eu = await exigirSeccao("pedidos", "editar");
 
   const [pedido] = await db.select().from(orders).where(eq(orders.id, orderId));
   if (!pedido) return { ok: false, erro: "Pedido não encontrado." };
@@ -207,6 +207,7 @@ export async function mudarEstadoPedido(
     eu.id
   );
 
+  await avisarMudancaDeEstado(orderId, novoEstado);
   recarregarPedido(orderId);
   revalidatePath("/admin/alugueres");
   return { ok: true, mensagem: `Pedido em "${ESTADO_PEDIDO[novoEstado].label}".` };
@@ -214,7 +215,7 @@ export async function mudarEstadoPedido(
 
 /** Regista um pagamento recebido (e confirma-o, se for o caso). */
 export async function registarPagamento(formData: FormData): Promise<Resultado> {
-  const eu = await exigirEquipa();
+  const eu = await exigirSeccao("pedidos", "editar");
   const orderId = texto(formData.get("orderId"));
   const valor = numero(formData.get("valor"));
   const metodo = texto(formData.get("metodo")) as PaymentMethod;
@@ -272,7 +273,7 @@ export async function registarPagamento(formData: FormData): Promise<Resultado> 
 
 /** Valida um comprovativo que o cliente tinha enviado. */
 export async function confirmarPagamento(paymentId: string): Promise<Resultado> {
-  const eu = await exigirEquipa();
+  const eu = await exigirSeccao("pedidos", "editar");
 
   const [pag] = await db.select().from(payments).where(eq(payments.id, paymentId));
   if (!pag) return { ok: false, erro: "Pagamento não encontrado." };
@@ -313,7 +314,7 @@ export async function confirmarPagamento(paymentId: string): Promise<Resultado> 
 
 /** Devolve a caução ao cliente no fim do aluguer. */
 export async function devolverCaucao(formData: FormData): Promise<Resultado> {
-  const eu = await exigirEquipa();
+  const eu = await exigirSeccao("pedidos", "editar");
   const orderId = texto(formData.get("orderId"));
   const valor = numero(formData.get("valor"));
   const motivo = texto(formData.get("motivo"));
@@ -350,7 +351,7 @@ export async function devolverCaucao(formData: FormData): Promise<Resultado> {
 
 /** Nota interna sobre o pedido, visível só para a equipa. */
 export async function guardarNotaPedido(formData: FormData): Promise<Resultado> {
-  const eu = await exigirEquipa();
+  const eu = await exigirSeccao("pedidos", "editar");
   const orderId = texto(formData.get("orderId"));
   const nota = texto(formData.get("nota"));
 
@@ -372,7 +373,7 @@ export async function mudarEstadoMarcacao(
   id: string,
   estado: AppointmentStatus
 ): Promise<Resultado> {
-  const eu = await exigirEquipa();
+  const eu = await exigirSeccao("provas", "editar");
 
   const [marcacao] = await db.select().from(appointments).where(eq(appointments.id, id));
   if (!marcacao) return { ok: false, erro: "Marcação não encontrada." };
@@ -424,7 +425,7 @@ export async function mudarEstadoMarcacao(
 }
 
 export async function guardarNotasProva(formData: FormData): Promise<Resultado> {
-  await exigirEquipa();
+  await exigirSeccao("provas", "editar");
   const id = texto(formData.get("id"));
   const notas = texto(formData.get("staffNotes"));
 
@@ -453,7 +454,7 @@ export async function guardarNotasProva(formData: FormData): Promise<Resultado> 
  * depois (a lavandaria atrasou, apareceu um arranjo a fazer).
  */
 export async function registarHigienizacao(formData: FormData): Promise<Resultado> {
-  const eu = await exigirEquipa();
+  const eu = await exigirSeccao(["alugueres", "pedidos"], "editar");
 
   const reservationId = texto(formData.get("reservationId"));
   const devolvidaEmStr = texto(formData.get("devolvidaEm"));
@@ -538,7 +539,7 @@ export async function registarHigienizacao(formData: FormData): Promise<Resultad
 
 /** Bloqueio manual de uma peça (manutenção, sessão fotográfica, aluguer no balcão). */
 export async function bloquearPeca(formData: FormData): Promise<Resultado> {
-  const eu = await exigirEquipa();
+  const eu = await exigirSeccao("alugueres", "editar");
   const variantId = texto(formData.get("variantId"));
   const inicioStr = texto(formData.get("inicio"));
   const fimStr = texto(formData.get("fim"));
@@ -578,7 +579,7 @@ export async function bloquearPeca(formData: FormData): Promise<Resultado> {
 
 /** Liberta uma peça: a reserva deixa de contar e a peça volta ao catálogo. */
 export async function libertarPeca(reservationId: string): Promise<Resultado> {
-  const eu = await exigirEquipa();
+  const eu = await exigirSeccao("alugueres", "editar");
 
   const [reserva] = await db
     .select()
@@ -610,7 +611,7 @@ export async function libertarPeca(reservationId: string): Promise<Resultado> {
 // =====================================================================
 
 export async function guardarProduto(formData: FormData): Promise<Resultado> {
-  await exigirEquipa();
+  await exigirSeccao("produtos", "editar");
 
   const id = texto(formData.get("id"));
   const nome = texto(formData.get("name"));
@@ -688,7 +689,7 @@ export async function guardarProduto(formData: FormData): Promise<Resultado> {
 }
 
 export async function guardarVariante(formData: FormData): Promise<Resultado> {
-  await exigirEquipa();
+  await exigirSeccao("produtos", "editar");
 
   const id = texto(formData.get("id"));
   const productId = texto(formData.get("productId"));
@@ -719,7 +720,7 @@ export async function guardarVariante(formData: FormData): Promise<Resultado> {
 }
 
 export async function apagarVariante(id: string, productId: string): Promise<Resultado> {
-  await exigirEquipa();
+  await exigirSeccao("produtos", "editar");
 
   const reservas = await db
     .select()
@@ -751,7 +752,7 @@ export async function apagarVariante(id: string, productId: string): Promise<Res
 
 export async function guardarDefinicoes(formData: FormData): Promise<Resultado> {
   // Administrador e suporte técnico podem alterar definições da loja.
-  await exigirSeccao("definicoes");
+  await exigirSeccao("definicoes", "editar");
 
   const diasAbertos = [0, 1, 2, 3, 4, 5, 6].filter(
     (d) => texto(formData.get(`dia-${d}`)) === "sim"
@@ -846,10 +847,7 @@ export async function guardarFuncionario(formData: FormData): Promise<Resultado>
  * porque a peça ainda tem de voltar.
  */
 export async function registarEntrega(orderId: string): Promise<Resultado> {
-  const eu = await exigirEquipa();
-  if (!ACCOES.registarEntregas(eu.role)) {
-    return { ok: false, erro: "O seu perfil não regista entregas." };
-  }
+  const eu = await exigirSeccao("entregas", "editar");
 
   const [pedido] = await db.select().from(orders).where(eq(orders.id, orderId));
   if (!pedido) return { ok: false, erro: "Pedido não encontrado." };
@@ -894,10 +892,7 @@ export async function registarEntrega(orderId: string): Promise<Resultado> {
 
 /** Tentativa de entrega sem sucesso: fica o registo, o estado não muda. */
 export async function registarTentativaDeEntrega(formData: FormData): Promise<Resultado> {
-  const eu = await exigirEquipa();
-  if (!ACCOES.registarEntregas(eu.role)) {
-    return { ok: false, erro: "O seu perfil não regista entregas." };
-  }
+  const eu = await exigirSeccao("entregas", "editar");
 
   const orderId = texto(formData.get("orderId"));
   const motivo = texto(formData.get("motivo"));
@@ -921,10 +916,7 @@ export async function registarTentativaDeEntrega(formData: FormData): Promise<Re
  * funcionário pode depois acertar as datas em Alugueres.
  */
 export async function registarRecolha(orderId: string): Promise<Resultado> {
-  const eu = await exigirEquipa();
-  if (!ACCOES.registarEntregas(eu.role)) {
-    return { ok: false, erro: "O seu perfil não regista recolhas." };
-  }
+  const eu = await exigirSeccao("entregas", "editar");
 
   const [pedido] = await db.select().from(orders).where(eq(orders.id, orderId));
   if (!pedido) return { ok: false, erro: "Pedido não encontrado." };

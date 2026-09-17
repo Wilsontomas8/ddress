@@ -3,6 +3,7 @@ import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   categories,
+  collectionProducts,
   productImages,
   productVariants,
   products,
@@ -105,12 +106,28 @@ type FiltrosListagem = {
   ordenar?: string;
   limite?: number;
   apenasDestaques?: boolean;
+  /** Só as peças desta colecção, pela ordem definida no painel */
+  colecaoId?: string;
+  /** Só estes ids (ex.: sapatos sugeridos) */
+  ids?: string[];
 };
 
 export async function listarProdutos(f: FiltrosListagem = {}): Promise<ProdutoDaListagem[]> {
   const condicoes = [eq(products.active, true)];
 
   if (f.seccao) condicoes.push(eq(products.section, f.seccao));
+  if (f.ids) {
+    if (f.ids.length === 0) return [];
+    condicoes.push(inArray(products.id, f.ids));
+  }
+  if (f.colecaoId) {
+    condicoes.push(
+      inArray(
+        products.id,
+        db.select({ id: collectionProducts.productId }).from(collectionProducts).where(eq(collectionProducts.collectionId, f.colecaoId))
+      )
+    );
+  }
   if (f.apenasDestaques) condicoes.push(eq(products.featured, true));
 
   if (f.tipo === "venda") {

@@ -61,6 +61,27 @@ export const esquemaPedido = z.object({
   referenciaPagamento: z.string().optional(),
   nota: z.string().max(1000).optional(),
   itens: z.array(esquemaItem).min(1, "O carrinho está vazio."),
+  /** Serviços pedidos junto com a encomenda */
+  extras: z
+    .object({
+      maquilhagem: z
+        .object({
+          parceiroId: z.string().min(1, "Escolha a maquilhadora."),
+          data: z.string().regex(/^d{4}-d{2}-d{2}$/, "Indique o dia da maquilhagem."),
+          hora: z.string().regex(/^d{2}:d{2}$/).optional().or(z.literal("")),
+          local: z.string().max(200).optional(),
+          notas: z.string().max(1000).optional(),
+        })
+        .optional(),
+      sapatos: z
+        .object({
+          tamanho: z.string().max(20).optional(),
+          notas: z.string().max(1000).optional(),
+          produtos: z.array(z.string()).max(10).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export type DadosPedido = z.infer<typeof esquemaPedido>;

@@ -5,6 +5,7 @@ import { appointments, orderEvents, orders, rentalReservations } from "@/db/sche
 import { libertarPedidoNaTransacao } from "./cancelamento";
 import { ESTADOS_DE_PEDIDO_QUE_EXPIRAM, avaliarReserva, type AvaliacaoDaReserva } from "./expiracao";
 import { formatDateTime } from "./dates";
+import { avisarMudancaDeEstado } from "./notificacoes";
 import { getSettings } from "./settings";
 
 export type PedidoEmRisco = {
@@ -102,6 +103,7 @@ export async function expirarReservasSemProva(agora = new Date()): Promise<strin
     });
   }
 
+  for (const p of expiradas) await avisarMudancaDeEstado(p.orderId, "CANCELADO");
   return expiradas.map((p) => p.numero);
 }
 

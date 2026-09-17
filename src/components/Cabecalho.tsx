@@ -14,6 +14,7 @@ type Props = {
 };
 
 const LIGACOES_ESQUERDA = [
+  { href: "/colecoes", texto: "Colecções" },
   { href: "/loja/mulher", texto: "Mulher" },
   { href: "/loja/homem", texto: "Homem" },
   { href: "/loja/crianca", texto: "Criança" },
@@ -21,8 +22,9 @@ const LIGACOES_ESQUERDA = [
 ];
 
 const LIGACOES_DIREITA = [
+  { href: "/quem-somos", texto: "Quem somos" },
+  { href: "/maquilhagem", texto: "Maquilhagem" },
   { href: "/marcacao", texto: "Marcar prova" },
-  { href: "/acompanhar", texto: "Acompanhar pedido" },
 ];
 
 export default function Cabecalho({ nomeLoja, utilizador }: Props) {
@@ -103,13 +105,13 @@ export default function Cabecalho({ nomeLoja, utilizador }: Props) {
           >
             <Menu className="h-5 w-5" strokeWidth={1.5} />
           </button>
-          <nav aria-label="Colecções" className="hidden items-center gap-7 lg:flex">
+          <nav aria-label="Colecções" className="hidden items-center gap-6 lg:flex xl:gap-7">
             {LIGACOES_ESQUERDA.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 className={classeLigacao}
-                aria-current={pathname === l.href.split("?")[0] && !l.href.includes("?") ? "page" : undefined}
+                aria-current={!l.href.includes("?") && (pathname === l.href || pathname.startsWith(`${l.href}/`)) ? "page" : undefined}
               >
                 {l.texto}
               </Link>
@@ -127,7 +129,7 @@ export default function Cabecalho({ nomeLoja, utilizador }: Props) {
 
         {/* direita */}
         <div className="flex items-center justify-end gap-1 sm:gap-3">
-          <nav aria-label="Serviços" className="mr-4 hidden items-center gap-7 xl:flex">
+          <nav aria-label="Serviços" className="mr-3 hidden items-center gap-6 xl:flex">
             {LIGACOES_DIREITA.map((l) => (
               <Link key={l.href} href={l.href} className={classeLigacao} aria-current={pathname === l.href ? "page" : undefined}>
                 {l.texto}
@@ -220,7 +222,12 @@ export default function Cabecalho({ nomeLoja, utilizador }: Props) {
           <div className="filete-ouro opacity-60" />
           <nav aria-label="Menu principal" className="flex-1 overflow-y-auto px-6 py-8">
             <ul className="space-y-1">
-              {[...LIGACOES_ESQUERDA, ...LIGACOES_DIREITA, { href: "/como-funciona", texto: "Como funciona" }].map((l) => (
+              {[
+                ...LIGACOES_ESQUERDA,
+                ...LIGACOES_DIREITA,
+                { href: "/acompanhar", texto: "Acompanhar pedido" },
+                { href: "/como-funciona", texto: "Como funciona" },
+              ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="block py-2.5 font-display text-3xl text-marfim-50 italic">
                     {l.texto}

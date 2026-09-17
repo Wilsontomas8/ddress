@@ -2,12 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { categories, productImages, productVariants, products } from "@/db/schema";
+import { categories, collectionProducts, productImages, productSuggestions, productVariants, products } from "@/db/schema";
 import FormularioProduto from "@/components/admin/FormularioProduto";
 import EditorVariantes from "@/components/admin/EditorVariantes";
 import { estadoDasPecas } from "@/lib/catalogo";
 import { toISODay } from "@/lib/dates";
 import { exigirAcesso } from "@/lib/guarda";
+import { listarColecoes, pecasParaEscolher } from "@/lib/conteudos";
+import { guardarLigacoesDaPeca } from "@/app/admin/acoes-conteudos";
+import FormularioAccao from "@/components/admin/FormularioAccao";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +25,7 @@ export default async function PaginaEditarPeca({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await exigirAcesso("produtos");
+  const eu = await exigirAcesso("produtos");
 
   const { id } = await params;
 
@@ -43,7 +46,15 @@ export default async function PaginaEditarPeca({
       .orderBy(asc(productImages.position)),
   ]);
 
-  const estados = await estadoDasPecas(variantes.map((v) => v.id));
+  const [estados, sapatos, colecoes, sugeridos, naColecao] = await Promise.all([
+    estadoDasPecas(variantes.map((v) => v.id)),
+    pecasParaEscolher({ soSapatos: true }),
+    listarColecoes({ incluirInactivas: true }),
+    db.select({ id: productSuggestions.suggestedProductId }).from(productSuggestions).where(eq(productSuggestions.productId, id)),
+    db.select({ id: collectionProducts.collectionId }).from(collectionProducts).where(eq(collectionProducts.productId, id)),
+  ]);
+  const idsSugeridos = sugeridos.map((x) => x.id);
+  const idsColecoes = naColecao.map((x) => x.id);
 
   return (
     <div className="max-w-4xl">
@@ -110,6 +121,43 @@ export default async function PaginaEditarPeca({
             };
           })}
         />
+
+        <FormularioAccao acao={guardarLigacoesDaPeca} podeEditar={eu.podeEditar} textoBotao="Guardar colecções e sapatos" className="cartao space-y-5 p-5">
+          <input type="hidden" name="productId" value={produto.id} />
+          <div>
+            <h2 className="font-display text-lg">Colecções</h2>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {colecoes.map((c) => (
+                <li key={c.id}>
+                  <label className="chip cursor-pointer has-[:checked]:border-ouro">
+                    <input type="checkbox" name="colecoes" value={c.id} defaultChecked={idsColecoes.includes(c.id)} className="mr-1.5" />
+                    {c.name}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h2 className="font-display text-lg">Sapatos sugeridos</h2>
+            <p className="mt-1 text-sm text-tinta-70">Aparecem na página da peça, em “Complete o look”.</p>
+            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+              {sapatos
+                .filter((p) => p.id !== produto.id)
+                .map((p) => (
+                  <li key={p.id}>
+                    <label className="flex cursor-pointer items-center gap-3 border border-marfim-200 p-2 has-[:checked]:border-ouro">
+                      <input type="checkbox" name="sugeridos" value={p.id} defaultChecked={idsSugeridos.includes(p.id)} />
+                      {p.imagem && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.imagem} alt="" className="h-10 w-10 object-cover" />
+                      )}
+                      <span className="text-sm">{p.name}</span>
+                    </label>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        </FormularioAccao>
       </div>
     </div>
   );
