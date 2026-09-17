@@ -107,11 +107,34 @@ NOVO → RECEBIDO → AGUARDA_PROVA → CONFIRMADO → PAGO → PRONTO → ENTRE
                                                              ↘ EM_ALUGUER → DEVOLVIDO → CONCLUÍDO
 ```
 
-### Perfis (RBAC)
+### Perfis e permissões (RBAC)
 
-A matriz vive num só ficheiro, `src/lib/permissoes.ts`, usado pela navegação, pela entrada de
-cada página e pelas acções do servidor. O suporte técnico não gere contas; o contabilista só
-lê e exporta; o motorista não vê valores.
+Cada área do painel tem três níveis por perfil: **sem acesso**, **ver** ou **ver e alterar**.
+O padrão está em `src/lib/permissoes.ts`; o administrador muda-o em **Painel → Permissões**
+(guardado na tabela `role_permissions`, com registo na auditoria). A mesma matriz decide a
+navegação, a entrada de cada página (formulários ficam só de leitura sem edição) e **cada
+acção do servidor** (`exigirSeccao(área, "editar")`). Equipa e Permissões são sempre só do
+administrador.
+
+### Colecções, Quem somos e parceiros
+
+- **Colecções** (`/colecoes/[slug]`): vídeo de abertura, fotografias e as peças, filtráveis
+  por aluguer ou compra. Criadas e ordenadas em *Painel → Colecções*.
+- **Quem somos** (`/quem-somos`): texto, destaques (+3000 mulheres, +300 peças, recolha
+  gratuita, telefone), vídeo e galeria — tudo em *Painel → Conteúdos*.
+- **Maquilhagem e sapatos** (`/maquilhagem`): a cliente pede maquilhagem à parceira
+  (Val Makeup Antoluv) ou sapatos — escolhe modelos pela procura ou pede sugestão. Pode também
+  acrescentá-los no checkout. A loja trata em *Painel → Solicitações*: estados, nota interna,
+  sapatos sugeridos e ligações de WhatsApp para a cliente e a parceira.
+- **Sapatos sugeridos** por peça: *Painel → Peças → (peça)*; aparecem em “Complete o look”.
+
+### Notificações
+
+Um pedido novo, cada mudança de estado relevante e cada solicitação criam avisos:
+no site (área da cliente e *Painel → Notificações*, com contador) e por e-mail para a
+cliente, a loja (e-mail das Definições) e a parceira. Os avisos têm chave única, por isso
+nunca saem repetidos. Sem SMTP/Resend configurado, ficam “por configurar” e podem ser
+reenviados — ver `.env.example`.
 
 ---
 
@@ -141,14 +164,14 @@ Detalhe completo em [`docs/DESIGN.md`](docs/DESIGN.md).
 ## 4. Testes
 
 ```bash
-npm test          # Vitest: disponibilidade, preços, calendário, expiração, componentes (45 testes)
+npm test          # Vitest: disponibilidade, preços, calendário, expiração, permissões, componentes (53 testes)
 npm run e2e       # percursos num navegador real contra http://localhost:3100
 npm run capturas  # capturas a 390/768/1360 px com verificação de transbordo
 ```
 
 Os percursos e as capturas precisam do site a correr (`npx next dev -p 3100`) e usam o
 Chromium do Playwright, ou o Edge/Chrome instalados. Última execução: perfis 13/13,
-cliente 10/10, painel 15/15; nenhuma página transborda nas três larguras.
+cliente 10/10, painel 15/15, conteúdos 16/16.
 
 ---
 
@@ -173,6 +196,8 @@ cada arranque a frio; pedidos criados podem desaparecer). Serve para aprovar a F
    **atendimentoddress@gmail.com** com a palavra-passe definida.
 4. Confirme em **/api/saude**: `modo` deve dizer `postgresql` e `base.responde` `true`.
    O endpoint só indica que variáveis existem; nunca mostra valores.
+5. E-mails: defina `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` (palavra-passe de aplicação do Gmail
+   atendimentoddress@gmail.com) ou `RESEND_API_KEY`.
 
 Nenhum segredo entra no repositório — o repositório é **público**.
 
@@ -182,10 +207,12 @@ Nenhum segredo entra no repositório — o repositório é **público**.
 
 - Supabase ligado na Vercel (secção 5) e, antes de abrir ao público, limpeza dos dados de
   demonstração.
-- Gestão de conteúdos no painel: páginas, banners e vídeo, menus, FAQ, campanhas.
+- Importar os vestidos reais do catálogo de WhatsApp (as colecções Gala, Noite e Cerimónia são
+  provisórias).
+- Restantes conteúdos no painel: banners e vídeo da página inicial, menus, FAQ, campanhas.
 - Carregamento de fotografias e comprovativos (Supabase Storage).
 - Factura CEGID: anexação manual (âmbito base); integração automática depende da API e licença.
-- Notificações por e-mail (atendimentoddress@gmail.com / Resend), WhatsApp Business e Telegram;
+- Credenciais de e-mail na Vercel (o envio já está feito); WhatsApp Business API e Telegram;
   newsletter com consentimento e avisos de disponibilidade.
 - Relatórios em PDF (hoje: CSV para Excel).
 - Recuperação de palavra-passe, limite de tentativas e auditoria global (login, preços,
@@ -199,7 +226,8 @@ Nenhum segredo entra no repositório — o repositório é **público**.
 ```
 src/
   app/(loja)/          loja e área do cliente
-  app/admin/           painel de gestão (acoes.ts = acções do servidor)
+  app/admin/           painel de gestão (acoes.ts = operação, acoes-conteudos.ts = colecções,
+                       conteúdos, parceiros, solicitações, notificações, permissões)
   app/api/             disponibilidade, orçamento, pedidos, marcações, sessões, relatórios,
                        tarefas agendadas e /api/saude
   components/          interface da loja (HeroInicio, CartaoProduto, CalendarioProva…)
@@ -207,7 +235,8 @@ src/
   conteudo/            textos e vídeo da página inicial
   db/                  schema, ligação, migrações, semente, implantação
   lib/                 regras de negócio: availability, expiracao, reservas, pedidos,
-                       marcacoes, permissoes, auth
+                       marcacoes, permissoes, auth, conteudos, solicitacoes, notificacoes,
+                       email, whatsapp, auditoria
 drizzle/               migrações SQL versionadas
 scripts/               testes de percurso e capturas
 docs/DESIGN.md         sistema visual

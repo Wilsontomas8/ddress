@@ -37,8 +37,11 @@ Não correr `next build` com o servidor de desenvolvimento ligado na mesma pasta
    em ficheiros, comentários ou commits. Configuração de produção faz-se na Vercel.
 2. **Regras de negócio vivem num só sítio** e o servidor recalcula sempre:
    disponibilidade e preço em `src/lib/availability.ts`, expiração em `src/lib/expiracao.ts`,
-   permissões em `src/lib/permissoes.ts`.
-3. **RBAC validado no servidor** em cada página e acção; esconder um botão não é controlo.
+   permissões em `src/lib/permissoes.ts` (padrão) + tabela `role_permissions` (ajustes do
+   administrador), avisos em `src/lib/notificacoes.ts` (chave única, sem repetições).
+3. **RBAC validado no servidor** em cada página (`exigirAcesso`) e acção
+   (`exigirSeccao(área, "editar")`); esconder um botão não é controlo. Área nova = entrada em
+   `RECURSOS` + padrão por perfil + ícone em `PainelShell`.
 4. **Mudança de schema = migração** (`npm run db:generate`), nunca `db:push` em produção.
 5. **Dados de demonstração só fictícios.** Numa base real a semente corre em modo `publica`
    (contas de demonstração sem acesso).
@@ -63,4 +66,6 @@ corpo a explicar o porquê. `main` publica na Vercel a cada push.
 ## Contactos da loja
 
 E-mail: `atendimentoddress@gmail.com` · Instagram: `@ddress_aluguer_de_vestidos`.
-Telefone, IBAN e Multicaixa na semente são **de exemplo** até a DDRESS indicar os reais.
+Telefone/WhatsApp: +244 923 033 861. IBAN e Multicaixa na semente são **de exemplo** até a
+DDRESS indicar os reais. Parceira de maquilhagem: Val Makeup Antoluv (@val_makeup.antoluv).
+As colecções Gala, Noite e Cerimónia são provisórias até importar o catálogo de WhatsApp.
