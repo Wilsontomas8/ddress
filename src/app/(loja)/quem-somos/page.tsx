@@ -105,12 +105,9 @@ export default async function PaginaQuemSomos() {
                 src={videos[0].url}
                 poster={videos[0].poster ?? undefined}
                 className="h-full w-full object-cover"
-                muted
-                loop
                 playsInline
-                autoPlay
                 controls
-                preload="metadata"
+                preload="none"
                 aria-label={videos[0].title || "Vídeo da DDRESS"}
               />
             </div>

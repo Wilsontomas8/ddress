@@ -39,7 +39,9 @@ for (const largura of LARGURAS) {
   }
   const pagina = await contexto.newPage();
   for (const rota of ROTAS) {
-    await pagina.goto(BASE + rota, { waitUntil: "networkidle" });
+    // "load" e não "networkidle": as páginas com vídeo a correr nunca ficam
+    // sem pedidos de rede.
+    await pagina.goto(BASE + rota, { waitUntil: "domcontentloaded", timeout: 90000 });
     // Desce a página para carregar imagens com loading="lazy"
     await pagina.evaluate(async () => {
       for (let y = 0; y < document.body.scrollHeight; y += 700) {
