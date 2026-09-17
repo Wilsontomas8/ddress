@@ -1,261 +1,214 @@
-# DDRESS — loja online com venda, aluguer e prova no ateliê
+# DDRESS — venda e aluguer de vestidos
 
-Loja de roupa para **Homem**, **Mulher** e **Criança**, com peças para **comprar** e peças
-para **alugar**, marcação de **prova no ateliê** peça a peça, e um **painel de gestão** onde
-o funcionário recebe o pedido e fecha a venda.
+Loja online da **DDRESS** (Luanda): peças para **comprar** e para **alugar**, secções **Mulher**,
+**Homem** e **Criança**, **prova no ateliê** marcada peça a peça e **painel de gestão** por perfis.
 
-Feito com Next.js 15 (App Router), TypeScript, Tailwind CSS 4, Drizzle ORM e PostgreSQL.
+Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Drizzle ORM · PostgreSQL
+(Supabase em produção, PGlite embutido na demonstração) · Vitest + Testing Library · Playwright.
+
+Em produção: **https://ddress.vercel.app**
 
 ---
 
-## 1. Pôr a funcionar no seu computador
+## Estado do projecto
 
-Precisa de **Node.js 20 ou mais recente** e de uma base de dados **PostgreSQL**.
+| Fase | Âmbito (SOW v2.1) | Estado |
+|---|---|---|
+| **1 — Frontend** | Identidade visual, loja, área do cliente, painel dos cinco perfis internos, fluxos de reserva, prova, pagamento, entrega, recolha e higienização com dados simulados, testes de interface | **Concluída — aguarda aprovação da DDRESS** |
+| **2 — Backend, dados, E2E e deployment** | Supabase, autenticação e RBAC em produção, integrações (e-mail, WhatsApp, Telegram), CEGID, relatórios PDF, conteúdos, notificações | Por iniciar — ver [O que falta para a Fase 2](#o-que-falta-para-a-fase-2) |
+
+Desvio assumido face ao SOW na Fase 1: em vez de simular APIs com MSW, o site corre sobre um
+PostgreSQL **embutido** (PGlite) com dados de demonstração. É o mesmo código, as mesmas
+consultas e as mesmas migrações da produção — a Fase 2 só troca a ligação.
+
+---
+
+## 1. Pôr a funcionar no computador
+
+Precisa só de **Node.js 20+**. Não é preciso instalar base de dados.
 
 ```bash
-# 1. instalar as bibliotecas
 npm install
-
-# 2. criar o ficheiro de configuração
-cp .env.example .env
-#    abra o .env e preencha DATABASE_URL e AUTH_SECRET
-#    para gerar um segredo:  openssl rand -base64 48
-
-# 3. criar as tabelas na base de dados
-npm run db:push
-
-# 4. encher a loja com dados de demonstração (catálogo, contas, pedidos)
-npm run db:seed
-
-# 5. arrancar
 npm run dev
 ```
 
-Abra **http://localhost:3000**.
+Abra **http://localhost:3000**. No primeiro arranque o site cria a base embutida em
+`.dados/pglite` e carrega a demonstração: 16 peças, 6 meses de pedidos fechados, pedidos em
+curso e provas marcadas. Todos os clientes são fictícios.
 
-### Contas criadas pelo seed
+Para recomeçar do zero: pare o servidor, apague a pasta `.dados` e arranque de novo
+(ou `npm run db:reset`). Se a base ficar danificada — por exemplo, servidor terminado à
+força — o arranque põe-na de parte e cria outra automaticamente.
+
+### Contas de demonstração (só na base embutida)
 
 | Perfil | E-mail | Palavra-passe | Onde entra |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | Administrador | `admin@ddress.ao` | `admin123` | Tudo |
 | Funcionário | `domingos@ddress.ao` | `funcionario123` | Pedidos, provas, alugueres, entregas, peças, clientes |
 | Funcionária | `ana@ddress.ao` | `funcionario123` | Igual ao funcionário |
 | Suporte técnico | `suporte@ddress.ao` | `suporte123` | Resumo, pedidos, auditoria e definições |
 | Contabilista | `contabilidade@ddress.ao` | `conta123` | Resumo e relatórios, com exportação |
-| Motorista | `motorista@ddress.ao` | `motorista123` | Só as entregas e recolhas |
+| Motorista | `motorista@ddress.ao` | `motorista123` | Só entregas e recolhas |
 | Cliente | `cliente@exemplo.ao` | `cliente123` | Loja e conta de cliente |
 
-> **Antes de ir para produção**: apague estas contas ou mude as palavras-passe em
-> *Painel → Equipa*, e gere um `AUTH_SECRET` novo.
+Numa base de dados real estas contas **não** ficam com estas palavras-passe (ver secção 5).
 
 ---
 
-## 2. Como funciona o negócio (as regras que o código aplica)
+## 2. Regras do negócio que o código aplica
 
-### Venda
+### Aluguer — disponibilidade (`src/lib/availability.ts`)
 
-O cliente escolhe o tamanho, junta ao carrinho e finaliza. O stock baixa quando o pedido é
-criado e volta a subir se o pedido for cancelado. A prova no ateliê é **opcional** nas peças
-de venda.
+- **Peça sem reserva → disponível.**
+- **Peça com reserva → sai do catálogo**; não se aceita outra reserva por cima.
+- Volta a estar disponível **no dia seguinte ao fim da última reserva activa**, mais os dias de
+  higienização definidos na peça.
+- Com vários exemplares (`rentalStock > 1`) a regra aplica-se por exemplar.
+- Duas reservas em simultâneo nunca ficam com o mesmo exemplar no mesmo período.
 
-### Aluguer — a regra da disponibilidade
+### Preço
 
-Esta é a regra central da loja, e está implementada em `src/lib/availability.ts`:
+Calculado **sempre no servidor**: dias × preço diário. Nas peças com **pacote de
+fim-de-semana** (campo "Preço fim-de-semana" em *Painel → Peças*), um aluguer que começa à
+sexta-feira e dura 2 a 4 dias paga o valor do pacote, sempre que for mais barato. A caução é
+somada ao pagamento e devolvida no painel quando a peça volta em bom estado.
 
-- **Peça sem reserva → está disponível.**
-- **Peça com reserva → sai do catálogo.** Não se aceita nova reserva por cima.
-- **A peça volta a estar disponível no dia seguinte ao fim da última reserva ativa**, mais os
-  dias de higienização definidos no produto.
+### Prova no ateliê
 
-Quando uma peça tem mais do que um exemplar (`rentalStock > 1`), a regra aplica-se por
-exemplar: só desaparece do site quando **todos** estiverem reservados.
+- **Reside em Luanda** → prova obrigatória, com hora marcada.
+- **Reside fora de Luanda** → prova dispensada, com morada e declaração de responsabilidade.
+- O calendário é **por peça**: só oferece dias em que o ateliê está aberto, com antecedência
+  mínima, com cabine livre e com **aquela peça fisicamente no ateliê**.
 
-Reservas nos estados `CANCELADA` e `DEVOLVIDA` deixam de contar.
+### Expiração das reservas sem prova (`src/lib/expiracao.ts`)
 
-### Prova no ateliê: obrigatória em Luanda, dispensável fora
+Uma reserva de aluguer que exige prova **expira se não tiver prova marcada para, no mínimo,
+24 horas antes do dia do levantamento**. O pedido é cancelado, a peça volta ao site e fica
+registado na auditoria.
 
-Na página da peça, quem aluga uma peça de cerimónia escolhe entre duas situações:
+- As 24 horas mudam-se em *Painel → Definições*.
+- Conta como prova uma marcação por confirmar, confirmada ou realizada até ao limite; faltas e
+  cancelamentos não contam. Pedidos já confirmados pela loja e provas dispensadas não expiram.
+- O cliente vê o limite no calendário e na página do pedido; o calendário só oferece horas
+  dentro do limite; o painel mostra as *Reservas sem prova* com as horas que faltam.
+- A expiração corre ao consultar a disponibilidade e numa tarefa diária
+  (`/api/tarefas/expirar-reservas`, agendada em `vercel.json`).
 
-- **Resido em Luanda** — a prova é obrigatória e tem de escolher dia e hora, com pelo menos
-  24 horas de antecedência.
-- **Resido fora de Luanda** — a prova é dispensada. No checkout confirma a morada e assina
-  uma declaração de responsabilidade; o pedido guarda a residência declarada, a dispensa e o
-  momento em que a aceitou.
+### Devolução e higienização
 
-O servidor volta a validar esta regra ao gravar o pedido: sem prova marcada e sem declaração
-aceite, o pedido não passa.
-
-### Devolução e higienização — quem decide é o funcionário
-
-Quando a peça volta, o funcionário regista no painel **duas datas**:
-
-- **A peça voltou ao ateliê em** — o dia real da devolução, que pode não ser o combinado.
-- **Disponível outra vez a partir de** — vem sugerida com os dias de higienização do produto,
-  mas é editável: se a lavandaria atrasar ou aparecer um arranjo, empurra-se a data.
-
-Entre esses dois momentos a reserva fica em `EM_HIGIENIZACAO` e a peça **continua fora do
-site**, mesmo que o aluguer já tenha acabado no papel. No dia indicado, a peça volta sozinha
-ao catálogo — não é preciso ninguém fazer nada. Se a higienização acabar mais cedo, o botão
-*"Higienização concluída — libertar já"* devolve a peça ao site na hora.
-
-Isto regista-se em dois sítios: na ficha do pedido (secção *Devolução e higienização*) e no
-mapa em *Painel → Alugueres*, que serve também para as peças alugadas ao balcão. Fica tudo no
-histórico do pedido, com data, notas e o nome de quem registou.
-
-O preço é calculado **sempre no servidor** (`orcamentoAluguer`): dias × preço diário, ou o
-pacote de fim-de-semana quando o período começa à sexta-feira e o pacote sai mais barato.
-A caução é somada ao pagamento e devolvida no painel quando a peça volta em bom estado.
-
-### Prova no ateliê — calendário por peça
-
-O calendário é gerado **para cada peça** (`calendarioDeProva`). Um horário só é oferecido
-quando:
-
-1. o ateliê está aberto nesse dia da semana e não é feriado;
-2. respeita a antecedência mínima e o horizonte de marcações;
-3. **aquela peça está fisicamente no ateliê** nesse dia — ou seja, não está alugada;
-4. ainda há cabine livre naquele horário;
-5. aquela peça não está a ser provada por outro cliente à mesma hora.
-
-Tudo isto se configura em *Painel → Definições*: dias abertos, horas, duração da prova,
-número de cabines, antecedência mínima e feriados.
+O funcionário regista o dia real da devolução e o dia em que a peça volta ao site. Entre os
+dois, a peça fica `EM_HIGIENIZACAO` e **fora do catálogo**; no dia indicado volta sozinha.
 
 ### Do pedido à entrega
 
 ```
-NOVO → RECEBIDO → AGUARDA_PROVA → CONFIRMADO → PAGO → PRONTO → ENTREGUE  → CONCLUÍDO
-                                                              ↘ EM_ALUGUER → DEVOLVIDO → CONCLUÍDO
+NOVO → RECEBIDO → AGUARDA_PROVA → CONFIRMADO → PAGO → PRONTO → ENTREGUE   → CONCLUÍDO
+                                                             ↘ EM_ALUGUER → DEVOLVIDO → CONCLUÍDO
 ```
 
-O funcionário faz o pedido andar no painel. Cada passagem de estado ajusta a reserva da peça:
-confirmar segura-a, entregar marca-a como fora, devolver liberta-a, cancelar desfaz tudo e
-repõe o stock.
+### Perfis (RBAC)
 
-### Pagamentos
-
-Quatro métodos, todos suportados:
-
-- **Multicaixa Express** — o cliente paga para o número da loja e indica a referência.
-- **Transferência bancária** — mostra os dados da conta; o cliente envia o comprovativo e o
-  funcionário valida no painel.
-- **Na entrega ou no ateliê** — paga quando levanta.
-- **Cartão Visa/Mastercard** — a opção só aparece no checkout quando existe `STRIPE_SECRET_KEY`
-  no `.env`. A ligação ao Stripe ainda tem de ser feita (ver secção 6).
+A matriz vive num só ficheiro, `src/lib/permissoes.ts`, usado pela navegação, pela entrada de
+cada página e pelas acções do servidor. O suporte técnico não gere contas; o contabilista só
+lê e exporta; o motorista não vê valores.
 
 ---
 
-## 3. O painel de gestão
+## 3. Identidade visual
 
-Em **/admin**, para quem tenha conta de funcionário ou administrador.
+Detalhe completo em [`docs/DESIGN.md`](docs/DESIGN.md).
 
-| Secção | Para quê |
-| --- | --- |
-| **Resumo** | O que precisa de atenção hoje: pedidos por receber, provas do dia, devoluções previstas e em atraso. |
-| **Pedidos** | Receber o pedido, confirmar pagamentos, fazer o pedido andar, devolver a caução, deixar notas internas. Cada pedido tem histórico de tudo o que aconteceu e quem fez. |
-| **Provas** | Agenda do ateliê, duas semanas de cada vez. Confirmar, marcar como realizada, registar faltas e escrever as medidas depois da prova. |
-| **Alugueres** | Todas as reservas ativas, com a data de devolução, a data em que cada peça volta ao site e o estado da higienização. Permite registar devoluções, ajustar as datas de higienização, bloquear uma peça à mão (aluguer ao balcão, arranjos) e libertar peças. |
-| **Peças** | Catálogo: criar e editar peças, preços de venda e de aluguer, caução, stock por tamanho. |
-| **Clientes** | Quem comprou, quanto gastou, quantas provas fez — com conta ou sem conta. |
-| **Equipa** | *(só administrador)* contas de acesso ao painel. |
-| **Definições** | *(só administrador)* dados da loja, contas de pagamento e horários do ateliê. |
+- **Cor**: tirada do logótipo — ouro sobre tecido preto, marfim nas zonas de leitura.
+  Tokens em `src/app/globals.css`; o painel usa os mesmos nomes com valores escuros
+  (`.tema-escuro`).
+- **Tipografia**: fonte da Apple (SF Pro, via `-apple-system`) na interface, com Inter como
+  equivalente noutros sistemas; **Bodoni Moda** nos títulos. Fontes servidas pelo próprio site.
+- **Página inicial**: vídeo da colecção em slides (`src/conteudo/slides-inicio.ts`). No
+  telemóvel ocupa o ecrã; no computador fica num painel vertical com fundo desfocado. Quem
+  tem movimento reduzido ou poupança de dados vê a imagem parada.
+- **Painel**: modo escuro inspirado no modelo de referência — barra lateral, indicadores,
+  gráfico de faturação, acções rápidas, pedidos com progresso.
 
----
+### Trocar o vídeo ou as fotografias
 
-## 4. Trocar as fotografias das peças
-
-As imagens do catálogo são desenhos temporários, em `public/img/*.svg`. Para pôr as
-fotografias reais:
-
-1. Coloque as fotos em `public/img/` (recomendado: 900 × 1200 px, JPG ou WebP).
-2. Em *Painel → Peças*, abra a peça e escreva o caminho no campo **Imagem**, por exemplo
-   `/img/vestido-bordeaux.jpg`.
-
-Também pode apontar para um endereço completo de um serviço de imagens.
+- Vídeo: `public/video/` — ver [`public/video/LEIA-ME.md`](public/video/LEIA-ME.md).
+- Peças: as imagens actuais são desenhos provisórios em `public/img/`. Coloque as fotografias
+  (900 × 1200 px) e indique o caminho em *Painel → Peças*. O carregamento pelo painel é da Fase 2.
 
 ---
 
-## 5. Publicar na internet
-
-A forma mais simples é **Vercel** (aplicação) + **Neon** ou **Supabase** (base de dados), com
-plano gratuito suficiente para começar.
-
-1. Crie a base de dados no Neon/Supabase e copie a *connection string*.
-2. Envie este projecto para um repositório Git.
-3. Na Vercel, importe o repositório e defina as variáveis de ambiente:
-   `DATABASE_URL`, `AUTH_SECRET`, `NEXT_PUBLIC_SITE_URL`.
-4. Na primeira vez, corra as migrações contra a base de dados de produção:
+## 4. Testes
 
 ```bash
-DATABASE_URL="a-sua-ligacao" npm run db:push
-DATABASE_URL="a-sua-ligacao" npm run db:seed     # opcional: só se quiser os dados de exemplo
+npm test          # Vitest: disponibilidade, preços, calendário, expiração, componentes (45 testes)
+npm run e2e       # percursos num navegador real contra http://localhost:3100
+npm run capturas  # capturas a 390/768/1360 px com verificação de transbordo
 ```
 
-Depois disto, cada `git push` publica a versão nova.
+Os percursos e as capturas precisam do site a correr (`npx next dev -p 3100`) e usam o
+Chromium do Playwright, ou o Edge/Chrome instalados. Última execução: perfis 13/13,
+cliente 10/10, painel 15/15; nenhuma página transborda nas três larguras.
 
 ---
 
-## 6. O que fica por ligar
+## 5. Publicar (Vercel + Supabase)
 
-Estas peças ficaram preparadas no código, mas precisam de contas externas para funcionar:
+O projecto já está ligado à Vercel: cada `git push` para `main` publica.
+O script `vercel-build` corre `src/db/implantar.ts` antes de `next build`.
 
-- **Pagamento com cartão (Stripe).** O checkout já esconde a opção quando não há chave. Falta
-  criar a sessão de pagamento e o *webhook* de confirmação.
-- **Avisos por WhatsApp ou SMS.** Hoje o cliente vê o estado na página do pedido e o
-  funcionário liga-lhe. Para avisos automáticos é preciso uma conta de API (por exemplo Twilio
-  ou a API do WhatsApp Business).
-- **Envio de e-mails** (confirmação de pedido e lembrete de prova). Precisa de um serviço de
-  envio, como Resend ou Brevo.
-- **Carregamento de fotografias pelo painel.** Neste momento indica-se o caminho da imagem;
-  falta o botão para enviar o ficheiro directamente.
+**Sem base de dados configurada**, a Vercel usa a base embutida de demonstração (recriada a
+cada arranque a frio; pedidos criados podem desaparecer). Serve para aprovar a Fase 1.
 
----
+**Para ligar o Supabase** (projecto DDRESS):
 
-## 7. Testes
+1. Vercel → projecto *ddress* → **Storage / Integrations** → ligar o **Supabase** e escolher o
+   projecto **DDRESS**. A integração cria `POSTGRES_URL`, `POSTGRES_URL_NON_POOLING` e
+   `SUPABASE_JWT_SECRET`. (Alternativa: definir `DATABASE_URL` e `DATABASE_URL_DIRECT` à mão —
+   ver `.env.example`.)
+2. Vercel → *Settings → Environment Variables* → `DDRESS_SENHA_ADMIN` com a palavra-passe da
+   conta de administrador (mínimo 10 caracteres). Opcional: `AUTH_SECRET` e `CRON_SECRET`.
+3. **Redeploy**. A implantação aplica as migrações, carrega a demonstração se a base estiver
+   vazia — com as contas de demonstração **sem acesso** — e cria o administrador
+   **atendimentoddress@gmail.com** com a palavra-passe definida.
+4. Confirme em **/api/saude**: `modo` deve dizer `postgresql` e `base.responde` `true`.
+   O endpoint só indica que variáveis existem; nunca mostra valores.
 
-```bash
-npm test                        # regras de disponibilidade, higienização, preços e calendário (25 testes)
-node scripts/e2e-perfis.mjs     # matriz de perfis: o que cada um vê e pode fazer
-node scripts/e2e-cliente.mjs    # percurso do cliente: escolher, marcar prova, fazer pedido
-node scripts/e2e-painel.mjs     # percurso do funcionário no painel
-```
-
-Os dois últimos abrem um navegador a sério contra o site em `http://localhost:3100`
-(arranque-o com `npx next dev -p 3100`) e deixam as imagens do percurso em `/tmp/wil-e2e`.
+Nenhum segredo entra no repositório — o repositório é **público**.
 
 ---
 
-## 8. Onde está cada coisa
+## O que falta para a Fase 2
+
+- Supabase ligado na Vercel (secção 5) e, antes de abrir ao público, limpeza dos dados de
+  demonstração.
+- Gestão de conteúdos no painel: páginas, banners e vídeo, menus, FAQ, campanhas.
+- Carregamento de fotografias e comprovativos (Supabase Storage).
+- Factura CEGID: anexação manual (âmbito base); integração automática depende da API e licença.
+- Notificações por e-mail (atendimentoddress@gmail.com / Resend), WhatsApp Business e Telegram;
+  newsletter com consentimento e avisos de disponibilidade.
+- Relatórios em PDF (hoje: CSV para Excel).
+- Recuperação de palavra-passe, limite de tentativas e auditoria global (login, preços,
+  stock, definições).
+- Pagamento com cartão, se houver contrato com operador.
+
+---
+
+## 6. Onde está cada coisa
 
 ```
 src/
-  app/
-    (loja)/            páginas do cliente: início, colecção, peça, carrinho,
-                       checkout, pedido, marcação, conta
-    admin/             painel de gestão  (acoes.ts = tudo o que o funcionário faz)
-    api/               endpoints: disponibilidade, orçamento, pedidos, marcações, sessões
-  components/          interface (carrinho, calendário de prova, formulários)
-  db/
-    schema.ts          modelo de dados completo, comentado
-    seed.ts            catálogo e dados de demonstração
-  lib/
-    availability.ts    REGRAS DE NEGÓCIO: disponibilidade, preços, calendário
-    pedidos.ts         criação do pedido (recalcula tudo no servidor)
-    marcacoes.ts       agenda do ateliê
-    auth.ts            sessões e permissões
-scripts/               geração das imagens e testes de percurso
+  app/(loja)/          loja e área do cliente
+  app/admin/           painel de gestão (acoes.ts = acções do servidor)
+  app/api/             disponibilidade, orçamento, pedidos, marcações, sessões, relatórios,
+                       tarefas agendadas e /api/saude
+  components/          interface da loja (HeroInicio, CartaoProduto, CalendarioProva…)
+  components/admin/    PainelShell, GraficoArea e formulários do painel
+  conteudo/            textos e vídeo da página inicial
+  db/                  schema, ligação, migrações, semente, implantação
+  lib/                 regras de negócio: availability, expiracao, reservas, pedidos,
+                       marcacoes, permissoes, auth
+drizzle/               migrações SQL versionadas
+scripts/               testes de percurso e capturas
+docs/DESIGN.md         sistema visual
 ```
-
-Comece por `src/lib/availability.ts` — é aí que vive a regra do aluguer.
-
----
-
-## 9. Segurança — o que já está feito
-
-- Palavras-passe guardadas com bcrypt; sessões em *cookie* `httpOnly` assinado (JWT).
-- O painel valida a sessão no servidor em **cada** acção — nunca confia no navegador.
-- Preços, disponibilidade e horários são **sempre recalculados no servidor** ao criar o
-  pedido: alterar valores no navegador não muda nada.
-- O painel e as rotas internas ficam fora dos motores de busca (`robots.ts`).
-
-Antes de abrir ao público: gere um `AUTH_SECRET` novo, mude as palavras-passe de demonstração
-e sirva o site por HTTPS (a Vercel faz isso automaticamente).
