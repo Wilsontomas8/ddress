@@ -20,3 +20,6 @@ next-env.d.ts
 *.tsbuildinfo
 .capturas/
 .media/
+
+# ficheiros carregados no computador (em produção vão para o Supabase Storage)
+/public/carregados

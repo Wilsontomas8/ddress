@@ -1,5 +1,7 @@
 "use client";
 
+import CarregarFicheiro from "./CarregarFicheiro";
+
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { guardarProduto } from "@/app/admin/acoes";
@@ -112,13 +114,16 @@ export default function FormularioProduto({ produto, imagem, categorias }: Props
           </label>
 
           <label>
-            <span className="etiqueta">Imagem (caminho ou endereço)</span>
+            <span className="etiqueta">Fotografia</span>
             <input
               className="campo"
               name="imagem"
               defaultValue={imagem ?? ""}
               placeholder="/img/nome-da-peca.svg"
             />
+            <span className="mt-2 block">
+              <CarregarFicheiro area="produtos" campo="imagem" texto="Carregar fotografia" />
+            </span>
           </label>
 
           <label className="sm:col-span-2">

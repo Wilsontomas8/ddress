@@ -21,11 +21,12 @@
     "e2e:conteudos": "node scripts/e2e-conteudos.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "e2e": "node scripts/e2e-perfis.mjs && node scripts/e2e-cliente.mjs && node scripts/e2e-painel.mjs && node scripts/e2e-conteudos.mjs && node scripts/e2e-contas.mjs",
+    "e2e": "node scripts/e2e-perfis.mjs && node scripts/e2e-cliente.mjs && node scripts/e2e-painel.mjs && node scripts/e2e-conteudos.mjs && node scripts/e2e-contas.mjs && node scripts/e2e-ficheiros.mjs",
     "capturas": "node scripts/capturas.mjs",
     "vercel-build": "tsx src/db/implantar.ts && next build",
     "db:implantar": "tsx src/db/implantar.ts",
-    "e2e:contas": "node scripts/e2e-contas.mjs"
+    "e2e:contas": "node scripts/e2e-contas.mjs",
+    "e2e:ficheiros": "node scripts/e2e-ficheiros.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

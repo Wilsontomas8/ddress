@@ -101,6 +101,7 @@ export default function AccoesPedido({
           <div className="mt-4 flex flex-wrap gap-2">
             <select
               className="campo max-w-56"
+              aria-label="Passar o pedido ao estado"
               value={novoEstado}
               onChange={(e) => setNovoEstado(e.target.value as OrderStatus)}
             >

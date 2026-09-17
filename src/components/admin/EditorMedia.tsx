@@ -2,6 +2,7 @@ import { ArrowDown, ArrowUp, Film, ImageIcon, Trash2 } from "lucide-react";
 import { adicionarMedia, moverMedia, removerMedia } from "@/app/admin/acoes-conteudos";
 import type { mediaItems } from "@/db/schema";
 import BotaoAccao from "./BotaoAccao";
+import CarregarFicheiro from "./CarregarFicheiro";
 import FormularioAccao from "./FormularioAccao";
 
 type Media = typeof mediaItems.$inferSelect;
@@ -79,6 +80,14 @@ export default function EditorMedia({
             <label>
               <span className="etiqueta">Endereço do ficheiro</span>
               <input name="url" className="campo" placeholder="/video/novo.mp4 ou https://…" required />
+              <span className="mt-2 block">
+                <CarregarFicheiro
+                  area={ownerType === "COLECCAO" ? "colecoes" : "conteudos"}
+                  campo="url"
+                  aceita="image/*,video/mp4,video/webm"
+                  texto="Carregar do computador"
+                />
+              </span>
             </label>
             <label className="sm:col-start-2">
               <span className="etiqueta">Imagem de capa do vídeo (opcional)</span>

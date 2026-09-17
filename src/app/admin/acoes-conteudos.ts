@@ -16,6 +16,9 @@ import {
   collections,
   mediaItems,
   notifications,
+  orderDocuments,
+  orderEvents,
+  orders,
   pageHighlights,
   pages,
   partners,
@@ -501,6 +504,78 @@ export async function guardarLigacoesDaPeca(formData: FormData): Promise<Resulta
     await registarAlteracao({ actorId: eu.id, area: "PRODUTO", acao: "LIGACOES", entidadeId: productId, mensagem: `Sapatos sugeridos (${sugeridos.length}) e colecções (${colecoesMarcadas.length}) actualizados por ${eu.name}.` });
     revalidatePath("/", "layout");
     return { ok: true, mensagem: "Guardado." };
+  } catch (e) {
+    return falha(e);
+  }
+}
+
+// =====================================================================
+//  DOCUMENTOS DO PEDIDO (factura do CEGID, comprovativos)
+// =====================================================================
+
+const ESPECIES_DE_DOCUMENTO = ["FACTURA", "COMPROVATIVO", "OUTRO"] as const;
+
+export async function guardarDocumentoDoPedido(formData: FormData): Promise<Resultado> {
+  try {
+    const eu = await exigirSeccao("pedidos", "editar");
+    const dados = z
+      .object({
+        orderId: z.string().min(1),
+        kind: z.enum(ESPECIES_DE_DOCUMENTO),
+        reference: z.string().trim().max(60).optional(),
+        url: enderecoDeMedia,
+        note: z.string().trim().max(300).optional(),
+      })
+      .parse({
+        orderId: texto(formData.get("orderId")),
+        kind: (texto(formData.get("kind")) || "FACTURA") as (typeof ESPECIES_DE_DOCUMENTO)[number],
+        reference: texto(formData.get("reference")) || undefined,
+        url: texto(formData.get("url")),
+        note: texto(formData.get("note")) || undefined,
+      });
+
+    const [pedido] = await db.select({ id: orders.id, number: orders.number }).from(orders).where(eq(orders.id, dados.orderId));
+    if (!pedido) return { ok: false, erro: "Pedido não encontrado." };
+
+    await db.insert(orderDocuments).values({
+      orderId: dados.orderId,
+      kind: dados.kind,
+      reference: dados.reference ?? "",
+      url: dados.url,
+      note: dados.note ?? "",
+      uploadedById: eu.id,
+    });
+
+    // Fica também no histórico do pedido, onde a equipa costuma olhar
+    await db.insert(orderEvents).values({
+      orderId: dados.orderId,
+      actorId: eu.id,
+      type: "DOCUMENTO",
+      message: `${eu.name} anexou ${dados.kind === "FACTURA" ? "a factura" : dados.kind === "COMPROVATIVO" ? "um comprovativo" : "um documento"}${dados.reference ? ` ${dados.reference}` : ""}.`,
+    });
+
+    revalidatePath(`/admin/pedidos/${dados.orderId}`);
+    revalidatePath(`/pedido/${pedido.number}`);
+    return { ok: true, mensagem: "Documento anexado." };
+  } catch (e) {
+    return falha(e);
+  }
+}
+
+export async function apagarDocumentoDoPedido(id: string): Promise<Resultado> {
+  try {
+    const eu = await exigirSeccao("pedidos", "editar");
+    const [d] = await db.select().from(orderDocuments).where(eq(orderDocuments.id, id));
+    if (!d) return { ok: false, erro: "Já não existe." };
+    await db.delete(orderDocuments).where(eq(orderDocuments.id, id));
+    await db.insert(orderEvents).values({
+      orderId: d.orderId,
+      actorId: eu.id,
+      type: "DOCUMENTO",
+      message: `${eu.name} removeu um documento do pedido.`,
+    });
+    revalidatePath(`/admin/pedidos/${d.orderId}`);
+    return { ok: true, mensagem: "Documento removido." };
   } catch (e) {
     return falha(e);
   }

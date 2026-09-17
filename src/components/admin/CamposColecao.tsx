@@ -1,5 +1,6 @@
 import { guardarColecao } from "@/app/admin/acoes-conteudos";
 import type { Collection } from "@/db/schema";
+import CarregarFicheiro from "./CarregarFicheiro";
 import FormularioAccao from "./FormularioAccao";
 
 export type PecaParaEscolher = { id: string; name: string; imagem: string | null; categoria: string };
@@ -42,10 +43,20 @@ export default function CamposColecao({
           <label>
             <span className="etiqueta">Imagem de capa</span>
             <input name="coverImage" className="campo" defaultValue={colecao?.coverImage ?? ""} placeholder="/quem-somos/galeria/foto-01.jpg" />
+            {podeEditar && (
+              <span className="mt-2 block">
+                <CarregarFicheiro area="colecoes" campo="coverImage" texto="Carregar capa" />
+              </span>
+            )}
           </label>
           <label>
             <span className="etiqueta">Vídeo de abertura</span>
             <input name="heroVideo" className="campo" defaultValue={colecao?.heroVideo ?? ""} placeholder="/video/ddress-colecao.mp4" />
+            {podeEditar && (
+              <span className="mt-2 block">
+                <CarregarFicheiro area="colecoes" campo="heroVideo" aceita="video/mp4,video/webm" texto="Carregar vídeo" />
+              </span>
+            )}
           </label>
           <label>
             <span className="etiqueta">Capa do vídeo</span>

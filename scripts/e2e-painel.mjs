@@ -74,7 +74,7 @@ try {
   }
 
   // -------------------------------------------------- mudar estado
-  const seletor = pagina.locator("select").first();
+  const seletor = pagina.getByLabel("Passar o pedido ao estado");
   const opcoes = await seletor.locator("option").allInnerTexts();
   const alvo = opcoes.find((o) => o !== "Passar a…");
   if (alvo) {

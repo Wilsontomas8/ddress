@@ -519,6 +519,37 @@
   .sem-impressao {
     display: none !important;
   }
+
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  /* A folha (relatório) sai em papel branco com as cores claras da loja.
+     O painel à volta leva a classe sem-impressao e não aparece no papel. */
+  html:has(.folha),
+  body:has(.folha),
+  .tema-escuro:has(.folha) {
+    background: #fff !important;
+  }
+
+  .folha {
+    --color-marfim-50: #ffffff;
+    --color-marfim-100: #f6f4ef;
+    --color-marfim-200: #e4e0d6;
+    --color-superficie: #ffffff;
+    --color-tinta: #14120f;
+    --color-tinta-70: #4a4439;
+    --color-tinta-50: #6e6757;
+    --color-ouro-escuro: #85660f;
+    color-scheme: light;
+    color: var(--color-tinta);
+    background: #fff !important;
+  }
+
+  .folha table {
+    width: 100%;
+  }
 }
 
 /* No painel, os itens de grelha podem encolher: tabelas largas passam a

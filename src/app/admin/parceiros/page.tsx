@@ -4,6 +4,7 @@ import { apagarParceiro, guardarParceiro } from "@/app/admin/acoes-conteudos";
 import type { Partner } from "@/db/schema";
 import FormularioAccao from "@/components/admin/FormularioAccao";
 import BotaoAccao from "@/components/admin/BotaoAccao";
+import CarregarFicheiro from "@/components/admin/CarregarFicheiro";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Parceiros" };
@@ -30,6 +31,9 @@ function CamposParceiro({ p }: { p?: Partner }) {
       <label>
         <span className="etiqueta">Logótipo</span>
         <input name="logoUrl" className="campo" defaultValue={p?.logoUrl ?? ""} placeholder="/parceiros/logo.jpg" />
+        <span className="mt-2 block">
+          <CarregarFicheiro area="parceiros" campo="logoUrl" texto="Carregar logótipo" />
+        </span>
       </label>
       <label>
         <span className="etiqueta">Instagram</span>

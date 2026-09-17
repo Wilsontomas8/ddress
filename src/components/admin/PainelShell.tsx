@@ -179,7 +179,7 @@ export default function PainelShell({ visiveis, papelTexto, nome, email, contado
   return (
     <div className="tema-escuro min-h-screen bg-[radial-gradient(80%_50%_at_60%_-10%,rgb(201_163_58/0.10),transparent_60%)]">
       {/* barra lateral fixa em ecrãs largos */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-marfim-200 bg-marfim-50/95 lg:block">{barraLateral}</aside>
+      <aside className="sem-impressao fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-marfim-200 bg-marfim-50/95 lg:block">{barraLateral}</aside>
 
       {/* barra lateral em gaveta nos restantes */}
       {menuAberto && (
@@ -189,9 +189,9 @@ export default function PainelShell({ visiveis, papelTexto, nome, email, contado
         </div>
       )}
 
-      <div className="lg:pl-64">
+      <div className="lg:pl-64 print:pl-0">
         {/* barra de topo */}
-        <header className="sticky top-0 z-30 border-b border-marfim-200 bg-marfim-50/80 backdrop-blur-md">
+        <header className="sem-impressao sticky top-0 z-30 border-b border-marfim-200 bg-marfim-50/80 backdrop-blur-md">
           <div className="flex h-18 items-center gap-3 px-4 sm:px-8">
             <button type="button" className="-ml-2 rounded-lg p-2 text-tinta-70 lg:hidden" onClick={() => setMenuAberto(true)} aria-label="Abrir menu">
               <Menu className="h-5 w-5" strokeWidth={1.5} />
@@ -252,7 +252,7 @@ export default function PainelShell({ visiveis, papelTexto, nome, email, contado
           </div>
         </header>
 
-        <main id="conteudo" className="px-4 py-8 sm:px-8">
+        <main id="conteudo" className="px-4 py-8 sm:px-8 print:p-0">
           {children}
         </main>
       </div>

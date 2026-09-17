@@ -155,7 +155,7 @@ export async function tentativasRecentes(limite = 100) {
       ip: loginAttempts.ip,
       ok: loginAttempts.ok,
       createdAt: loginAttempts.createdAt,
-      nome: sql<string | null>`(SELECT name FROM ${users} WHERE lower(${users.email}) = ${loginAttempts.email})`,
+      nome: sql<string | null>`(SELECT u.name FROM users u WHERE lower(u.email) = login_attempts.email LIMIT 1)`,
     })
     .from(loginAttempts)
     .orderBy(desc(loginAttempts.createdAt))

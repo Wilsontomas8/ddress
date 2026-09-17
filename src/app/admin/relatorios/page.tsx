@@ -68,6 +68,9 @@ export default async function PaginaRelatorios({
           >
             Mês seguinte →
           </Link>
+          <Link href={`/admin/relatorios/imprimir?mes=${mes}`} className="btn btn-contorno px-3 py-1.5 text-xs">
+            Imprimir / PDF
+          </Link>
           <a
             href={`/api/relatorios?mes=${mes}`}
             className="btn btn-principal px-3 py-1.5 text-xs"

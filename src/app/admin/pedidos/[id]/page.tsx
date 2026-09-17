@@ -4,6 +4,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   appointments,
+  orderDocuments,
   orderEvents,
   orderItems,
   orders,
@@ -17,6 +18,7 @@ import FormularioHigienizacao from "@/components/admin/FormularioHigienizacao";
 import { addDays, toISODay } from "@/lib/dates";
 import { getUtilizador } from "@/lib/auth";
 import AccoesPedido from "@/components/admin/AccoesPedido";
+import DocumentosDoPedido from "@/components/admin/DocumentosDoPedido";
 import { formatKz } from "@/lib/money";
 import { formatDateTime, formatNumericDate } from "@/lib/dates";
 import { exigirAcesso } from "@/lib/guarda";
@@ -42,7 +44,7 @@ export default async function PaginaPedidoAdmin({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await exigirAcesso("pedidos");
+  const acesso = await exigirAcesso("pedidos");
 
   const { id } = await params;
   const eu = await getUtilizador();
@@ -50,7 +52,7 @@ export default async function PaginaPedidoAdmin({
   const [pedido] = await db.select().from(orders).where(eq(orders.id, id));
   if (!pedido) notFound();
 
-  const [itens, pagamentos, eventos, marcacoes, reservas, responsavel] = await Promise.all([
+  const [itens, pagamentos, eventos, marcacoes, reservas, responsavel, documentos] = await Promise.all([
     db.select().from(orderItems).where(eq(orderItems.orderId, id)),
     db.select().from(payments).where(eq(payments.orderId, id)).orderBy(desc(payments.createdAt)),
     db
@@ -75,6 +77,12 @@ export default async function PaginaPedidoAdmin({
     pedido.assignedToId
       ? db.select().from(users).where(eq(users.id, pedido.assignedToId))
       : Promise.resolve([]),
+    db
+      .select({ doc: orderDocuments, quem: users.name })
+      .from(orderDocuments)
+      .leftJoin(users, eq(orderDocuments.uploadedById, users.id))
+      .where(eq(orderDocuments.orderId, id))
+      .orderBy(desc(orderDocuments.createdAt)),
   ]);
 
   const estado = ESTADO_PEDIDO[pedido.status];
@@ -348,6 +356,20 @@ export default async function PaginaPedidoAdmin({
               </div>
             )}
           </section>
+
+          <DocumentosDoPedido
+            orderId={pedido.id}
+            podeEditar={acesso.podeEditar}
+            documentos={documentos.map((d) => ({
+              id: d.doc.id,
+              kind: d.doc.kind,
+              reference: d.doc.reference,
+              url: d.doc.url,
+              note: d.doc.note,
+              createdAt: d.doc.createdAt,
+              quem: d.quem,
+            }))}
+          />
 
           {/* histórico */}
           <section className="cartao p-5">

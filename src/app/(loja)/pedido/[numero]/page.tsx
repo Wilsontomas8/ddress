@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPedidoPorNumero } from "@/lib/pedidos";
 import { db } from "@/db";
-import { serviceRequests } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { orderDocuments, serviceRequests } from "@/db/schema";
+import { desc, eq } from "drizzle-orm";
 import { ESTADO_SOLICITACAO, ROTULO_SOLICITACAO, type EstadoDeSolicitacao, type TipoDeSolicitacao } from "@/lib/solicitacoes-rotulos";
 import { ligacaoWhatsApp } from "@/lib/whatsapp";
 import { getSettings } from "@/lib/settings";
@@ -32,7 +32,10 @@ export default async function PaginaPedido({
 
   const loja = await getSettings();
   const { pedido, itens, marcacoes } = dados;
-  const solicitacoes = await db.select().from(serviceRequests).where(eq(serviceRequests.orderId, pedido.id));
+  const [solicitacoes, documentos] = await Promise.all([
+    db.select().from(serviceRequests).where(eq(serviceRequests.orderId, pedido.id)),
+    db.select().from(orderDocuments).where(eq(orderDocuments.orderId, pedido.id)).orderBy(desc(orderDocuments.createdAt)),
+  ]);
   const estado = ESTADO_PEDIDO[pedido.status];
   const pagamento = ESTADO_PAGAMENTO[pedido.paymentStatus];
 
@@ -235,6 +238,23 @@ export default async function PaginaPedido({
               ateliê em bom estado. Atrasos na devolução são cobrados ao preço de um dia de
               aluguer.
             </p>
+          </div>
+        )}
+
+        {documentos.length > 0 && (
+          <div className="mt-8 border-t border-marfim-200 pt-6">
+            <h2 className="font-display text-lg">Documentos</h2>
+            <ul className="mt-3 space-y-2 text-sm">
+              {documentos.map((d) => (
+                <li key={d.id} className="flex flex-wrap items-baseline gap-2">
+                  <a href={d.url} target="_blank" rel="noreferrer" className="ligacao">
+                    {d.kind === "FACTURA" ? "Factura" : d.kind === "COMPROVATIVO" ? "Comprovativo" : "Documento"}
+                    {d.reference ? ` ${d.reference}` : ""}
+                  </a>
+                  <span className="text-xs text-tinta-50">{formatNumericDate(d.createdAt)}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
