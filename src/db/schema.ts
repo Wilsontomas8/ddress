@@ -505,7 +505,8 @@ export const settings = pgTable("settings", {
   tagline: text("tagline").notNull().default("Aluguer e venda de vestidos"),
   phone: text("phone").notNull().default("+244 900 000 000"),
   whatsapp: text("whatsapp").notNull().default("+244 900 000 000"),
-  email: text("email").notNull().default("wilitsolution@gmail.com"),
+  /** Vazio enquanto a loja não tiver e-mail próprio — o site esconde-o */
+  email: text("email").notNull().default(""),
   address: text("address").notNull().default("Luanda, Angola"),
 
   // --- método TRANSFERÊNCIA ---
@@ -533,6 +534,12 @@ export const settings = pgTable("settings", {
   bookingHorizonDays: integer("booking_horizon_days").notNull().default(45),
   /** Feriados e dias fechados, "YYYY-MM-DD" */
   closedDates: text("closed_dates").array().notNull().default([]),
+
+  /**
+   * Uma reserva de aluguer que exige prova expira se, faltando estas horas
+   * para o levantamento, ainda não tiver nenhuma prova registada.
+   */
+  reservationExpiryHours: integer("reservation_expiry_hours").notNull().default(24),
 
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

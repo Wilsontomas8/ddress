@@ -13,3 +13,7 @@ yarn-error.log*
 next-env.d.ts
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# Base de dados embutida da Fase 1
+.dados
+.claude/

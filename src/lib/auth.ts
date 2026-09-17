@@ -9,8 +9,14 @@ import { ehPerfilDeEquipa, podeVer, type Seccao } from "./permissoes";
 export const COOKIE_NAME = "wil_sessao";
 const DURACAO_DIAS = 30;
 
+// Só para desenvolvimento local e demonstração da Fase 1. Em produção o
+// AUTH_SECRET é obrigatório e este valor nunca é usado.
+const SEGREDO_DE_DESENVOLVIMENTO = "ddress-desenvolvimento-local-nao-usar-em-producao";
+
 function segredo(): Uint8Array {
-  const s = process.env.AUTH_SECRET;
+  const s =
+    process.env.AUTH_SECRET ||
+    (process.env.NODE_ENV !== "production" ? SEGREDO_DE_DESENVOLVIMENTO : undefined);
   if (!s || s.length < 16) {
     throw new Error(
       "AUTH_SECRET em falta ou demasiado curto. Defina-o no ficheiro .env (openssl rand -base64 48)."
