@@ -22,9 +22,16 @@ const TIPOS = [
 
 const ORDENS = [
   { valor: "", texto: "Mais recentes" },
-  { valor: "preco-asc", texto: "Preço: do mais baixo" },
-  { valor: "preco-desc", texto: "Preço: do mais alto" },
+  { valor: "preco-asc", texto: "Preço mais baixo" },
+  { valor: "preco-desc", texto: "Preço mais alto" },
 ];
+
+const SECCOES_NAV = [
+  { href: "/loja", texto: "Tudo", seccao: undefined },
+  { href: "/loja/mulher", texto: "Mulher", seccao: "MULHER" },
+  { href: "/loja/homem", texto: "Homem", seccao: "HOMEM" },
+  { href: "/loja/crianca", texto: "Criança", seccao: "CRIANCA" },
+] as const;
 
 export default async function ListagemLoja({ seccao, filtros }: Props) {
   const [produtos, categorias] = await Promise.all([
@@ -51,124 +58,115 @@ export default async function ListagemLoja({ seccao, filtros }: Props) {
     return s ? `${base}?${s}` : base;
   }
 
-  const titulo = seccao ? labelSeccao(seccao) : filtros.q ? `“${filtros.q}”` : "Toda a colecção";
+  const titulo = seccao ? labelSeccao(seccao) : filtros.q ? `“${filtros.q}”` : "A colecção";
+  const temFiltros = !!(filtros.categoria || filtros.tipo || filtros.q || filtros.ordenar);
 
   return (
     <>
-      <section className="border-b border-marfim-200 bg-marfim-100">
-        <div className="mx-auto max-w-7xl px-4 py-10">
-          <nav className="text-xs text-tinta-50">
-            <Link href="/" className="hover:text-ouro-escuro">
+      {/* ------------------------------------------------ cabeçalho escuro */}
+      <section className="bg-preto text-marfim-50">
+        <div className="mx-auto max-w-[90rem] px-4 pt-14 pb-10 sm:px-8 sm:pt-20">
+          <nav aria-label="Caminho" className="rotulo text-[0.625rem] text-marfim-400">
+            <Link href="/" className="hover:text-ouro-claro">
               Início
             </Link>
-            <span className="mx-1.5">/</span>
-            <span>{titulo}</span>
+            <span className="mx-2">/</span>
+            <span className="text-marfim-200">{titulo}</span>
           </nav>
-          <h1 className="regua mt-3 font-display text-3xl sm:text-4xl">{titulo}</h1>
-          <p className="mt-4 text-sm text-tinta-70">
-            {produtos.length} {produtos.length === 1 ? "peça" : "peças"}
-            {filtros.tipo === "aluguer" && " disponíveis para aluguer"}
-            {filtros.tipo === "venda" && " à venda"}
-          </p>
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
+            <h1 className="font-display text-5xl leading-none sm:text-7xl">
+              {titulo}
+              <span className="texto-ouro italic">.</span>
+            </h1>
+            <p className="num text-sm text-marfim-300">
+              {produtos.length} {produtos.length === 1 ? "peça" : "peças"}
+              {filtros.tipo === "aluguer" && " para alugar"}
+              {filtros.tipo === "venda" && " à venda"}
+            </p>
+          </div>
+
+          <nav aria-label="Secções" className="sem-barra mt-10 -mb-px flex gap-8 overflow-x-auto border-b border-white/10">
+            {SECCOES_NAV.map((s) => {
+              const ativo = s.seccao === seccao;
+              return (
+                <Link
+                  key={s.href}
+                  href={s.href}
+                  aria-current={ativo ? "page" : undefined}
+                  className={`rotulo border-b pb-4 whitespace-nowrap transition-colors ${
+                    ativo ? "border-ouro-claro text-ouro-claro" : "border-transparent text-marfim-300 hover:text-marfim-50"
+                  }`}
+                >
+                  {s.texto}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl gap-10 px-4 py-10 lg:flex">
-        {/* ------------------------------------------------- filtros */}
-        <aside className="mb-8 shrink-0 lg:mb-0 lg:w-56">
-          <div className="mb-8">
-            <p className="etiqueta">Tipo</p>
-            <ul className="space-y-1.5">
-              {TIPOS.map((t) => {
-                const ativo = (filtros.tipo ?? "") === t.valor;
-                return (
-                  <li key={t.valor || "tudo"}>
-                    <Link
-                      href={comFiltro({ tipo: t.valor })}
-                      className={`text-sm ${ativo ? "text-ouro-escuro underline underline-offset-4" : "text-tinta-70 hover:text-ouro-escuro"}`}
-                    >
-                      {t.texto}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+      {/* ------------------------------------------------ filtros */}
+      <div className="sticky top-16 z-30 border-b border-marfim-200 bg-marfim-50/95 backdrop-blur sm:top-20">
+        <div className="sem-barra mx-auto flex max-w-[90rem] items-center gap-2 overflow-x-auto px-4 py-3 sm:px-8">
+          {TIPOS.map((t) => (
+            <Link
+              key={t.valor || "tudo"}
+              href={comFiltro({ tipo: t.valor })}
+              className="chip"
+              aria-current={(filtros.tipo ?? "") === t.valor ? "true" : undefined}
+            >
+              {t.texto}
+            </Link>
+          ))}
 
-          {categorias.length > 0 && (
-            <div className="mb-8">
-              <p className="etiqueta">Categoria</p>
-              <ul className="space-y-1.5">
-                <li>
-                  <Link
-                    href={comFiltro({ categoria: "" })}
-                    className={`text-sm ${!filtros.categoria ? "text-ouro-escuro underline underline-offset-4" : "text-tinta-70 hover:text-ouro-escuro"}`}
-                  >
-                    Todas
-                  </Link>
-                </li>
-                {categorias.map((c) => {
-                  const ativo = filtros.categoria === c.slug;
-                  return (
-                    <li key={c.id}>
-                      <Link
-                        href={comFiltro({ categoria: c.slug })}
-                        className={`text-sm ${ativo ? "text-ouro-escuro underline underline-offset-4" : "text-tinta-70 hover:text-ouro-escuro"}`}
-                      >
-                        {c.name}
-                        {!seccao && (
-                          <span className="ml-1 text-xs text-tinta-50">
-                            ({labelSeccao(c.section)})
-                          </span>
-                        )}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
+          {categorias.length > 0 && <span className="mx-2 h-5 w-px shrink-0 bg-marfim-300" aria-hidden="true" />}
 
-          <div>
-            <p className="etiqueta">Ordenar</p>
-            <ul className="space-y-1.5">
-              {ORDENS.map((o) => {
-                const ativo = (filtros.ordenar ?? "") === o.valor;
-                return (
-                  <li key={o.valor || "recentes"}>
-                    <Link
-                      href={comFiltro({ ordenar: o.valor })}
-                      className={`text-sm ${ativo ? "text-ouro-escuro underline underline-offset-4" : "text-tinta-70 hover:text-ouro-escuro"}`}
-                    >
-                      {o.texto}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </aside>
+          {categorias.map((c) => (
+            <Link
+              key={c.id}
+              href={comFiltro({ categoria: filtros.categoria === c.slug ? "" : c.slug })}
+              className="chip"
+              aria-current={filtros.categoria === c.slug ? "true" : undefined}
+            >
+              {c.name}
+              {!seccao && <span className="text-xs opacity-60">{labelSeccao(c.section)}</span>}
+            </Link>
+          ))}
 
-        {/* -------------------------------------------------- grelha */}
-        <div className="flex-1">
-          {produtos.length === 0 ? (
-            <div className="cartao p-10 text-center">
-              <p className="font-display text-xl">Não encontrámos peças com estes filtros.</p>
-              <p className="mt-2 text-sm text-tinta-70">
-                Experimente tirar um filtro ou procurar outra coisa.
-              </p>
-              <Link href={base} className="btn btn-contorno mt-6">
+          <span className="ml-auto" />
+          {ORDENS.map((o) => (
+            <Link
+              key={o.valor || "recentes"}
+              href={comFiltro({ ordenar: o.valor })}
+              className={`shrink-0 px-2 text-xs whitespace-nowrap underline-offset-4 ${
+                (filtros.ordenar ?? "") === o.valor ? "text-tinta underline" : "text-tinta-50 hover:text-tinta"
+              }`}
+            >
+              {o.texto}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* ------------------------------------------------ grelha */}
+      <div className="mx-auto max-w-[90rem] px-4 py-12 sm:px-8 sm:py-16">
+        {produtos.length === 0 ? (
+          <div className="mx-auto max-w-lg py-16 text-center">
+            <p className="font-display text-3xl">Não encontrámos peças com estes filtros.</p>
+            <p className="mt-3 text-sm text-tinta-70">Experimente tirar um filtro ou procurar outra coisa.</p>
+            {temFiltros && (
+              <Link href={base} className="btn btn-escuro mt-8">
                 Limpar filtros
               </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3">
-              {produtos.map((p) => (
-                <CartaoProduto key={p.id} produto={p} />
-              ))}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-12 sm:gap-x-6 md:grid-cols-3 xl:grid-cols-4">
+            {produtos.map((p) => (
+              <CartaoProduto key={p.id} produto={p} />
+            ))}
+          </div>
+        )}
       </div>
     </>
   );

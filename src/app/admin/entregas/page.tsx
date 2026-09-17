@@ -104,7 +104,7 @@ export default async function PaginaEntregas() {
                       </a>
                     </p>
                   </div>
-                  <span className="selo bg-marfim-100 text-tinta-70">{p.number}</span>
+                  <span className="selo tom-neutro">{p.number}</span>
                 </div>
 
                 <p className="mt-3 text-sm text-tinta-70">
@@ -160,7 +160,7 @@ export default async function PaginaEntregas() {
                     </div>
                     <span
                       className={`selo ${
-                        atrasada ? "bg-rose-100 text-rose-900" : "bg-marfim-100 text-tinta-70"
+                        atrasada ? "tom-rubi" : "tom-neutro"
                       }`}
                     >
                       {atrasada ? "Em atraso" : "A recolher"}

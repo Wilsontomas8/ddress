@@ -1,257 +1,518 @@
 @import "tailwindcss";
 
 /* =====================================================================
-   Sistema visual — DDRESS
-   Tirado do logótipo: ouro sobre preto, com marfim para as áreas de
-   leitura. Sem fontes externas: tudo assenta em tipos já presentes no
-   sistema, para o site abrir depressa mesmo com internet fraca.
+   DDRESS — sistema visual
+   ---------------------------------------------------------------------
+   Paleta tirada do logótipo: ouro em relevo sobre tecido preto, com
+   marfim para as zonas de leitura da loja.
 
-   Regra de contraste seguida em todo o sistema:
-     · ouro sobre preto  → decoração e texto de destaque
-     · ouro-escuro       → texto e ligações sobre marfim
-     · fundo ouro        → sempre com texto preto por cima
+   Referências de linguagem (sem copiar marcas):
+     · vídeo de página inteira e botões em pílula      (Hyer)
+     · fichas de peça sem moldura, rótulos espaçados   (Aligne)
+     · faixas claro/escuro e serifa editorial em itálico (Peak Design)
+     · hairlines finas e espaço generoso entre secções (Augen)
+     · painel escuro com cartões e gráficos            (modelo Dribbble)
+
+   Tipografia: a fonte da Apple (SF Pro, via -apple-system) para a
+   interface, com Inter como equivalente nos restantes sistemas; e
+   Bodoni Moda — um Didone de moda — para títulos e números.
+
+   Contraste medido (WCAG AA) — ver docs/DESIGN.md.
    ===================================================================== */
 
 @theme {
-  /* --- fundos claros (áreas de leitura) --- */
-  --color-marfim-50: #faf7f1;
-  --color-marfim-100: #f2ece0;
-  --color-marfim-200: #e6dcc8;
-  --color-marfim-300: #d5c7a8;
-  --color-marfim-400: #b9a576;
+  /* --- marfim: zonas de leitura --- */
+  --color-marfim-50: #fbf8f2;
+  --color-marfim-100: #f3ede1;
+  --color-marfim-200: #e7dfcf;
+  --color-marfim-300: #d6caaf;
+  --color-marfim-400: #b3a57f;
 
-  /* --- escuros (cabeçalho, rodapé, destaques) --- */
-  --color-preto: #0b0a09;
-  --color-carvao: #17150f;
-  --color-carvao-claro: #272319;
+  /* --- superfície elevada (cartões, campos) --- */
+  --color-superficie: #ffffff;
+
+  /* --- tecido: escuros da marca --- */
+  --color-preto: #0a0a0a;
+  --color-carvao: #121212;
+  --color-carvao-claro: #1f1d19;
 
   /* --- texto --- */
-  --color-tinta: #17150f;
-  --color-tinta-70: #4a443a;
-  --color-tinta-50: #726b5c;
+  --color-tinta: #14120f;
+  --color-tinta-70: #4a4439;
+  --color-tinta-50: #6e6757;
 
   /* --- ouro da marca --- */
-  --color-ouro: #c9a227;
-  --color-ouro-claro: #e3c76a;
-  --color-ouro-palido: #f3e4b2;
-  --color-ouro-escuro: #8a6b14;
+  --color-ouro: #c9a33a;
+  --color-ouro-claro: #e6c56a;
+  --color-ouro-palido: #f4e7bd;
+  --color-ouro-escuro: #85660f;
 
   /* --- estados --- */
-  --color-verde: #3f6b53;
+  --color-verde: #2f6b4f;
+  --color-azul: #2f5d8a;
+  --color-violeta: #6b4a8a;
   --color-rubi: #9b2c2c;
 
-  --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter Variable",
+    "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bodoni Moda Variable", "Bodoni 72", Didot, "Didot LT STD", Georgia, serif;
+
+  --ease-marca: cubic-bezier(0.2, 0.7, 0.1, 1);
 }
 
-html {
-  scroll-behavior: smooth;
-}
+/* Tema escuro do painel de gestão: os mesmos nomes, outros valores.
+   Tudo o que está dentro de .tema-escuro muda sem tocar nas classes. */
+.tema-escuro {
+  --color-marfim-50: #070707;
+  --color-marfim-100: #141414;
+  --color-marfim-200: #222222;
+  --color-marfim-300: #2e2e2e;
+  --color-marfim-400: #555555;
+  --color-superficie: #0f0f0f;
 
-body {
+  --color-tinta: #f5f3ef;
+  --color-tinta-70: #b9b4ab;
+  --color-tinta-50: #8a857b;
+
+  --color-ouro-escuro: #e6c56a;
+  --color-ouro-palido: #3a3016;
+
+  --color-verde: #5fbf8a;
+  --color-azul: #7fb2e5;
+  --color-violeta: #b99ae0;
+  --color-rubi: #f07a7a;
+
+  --raio-cartao: 16px;
+  --raio-campo: 10px;
+
+  color-scheme: dark;
   background-color: var(--color-marfim-50);
   color: var(--color-tinta);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
 }
 
-h1,
-h2,
-h3,
-.display {
-  font-family: var(--font-display);
-  letter-spacing: -0.01em;
+:root {
+  --raio-cartao: 0px;
+  --raio-campo: 2px;
 }
 
-/* Foco visível e consistente em todo o site */
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-ouro);
-  outline-offset: 2px;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-marfim-50);
+    color: var(--color-tinta);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  .display {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background-color: var(--color-ouro);
+    color: var(--color-preto);
+  }
+
+  /* Foco visível e consistente */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-ouro);
+    outline-offset: 3px;
+  }
+
+  .saltar-conteudo {
+    position: absolute;
+    left: 1rem;
+    top: -4rem;
+    z-index: 100;
+    padding: 0.6rem 1rem;
+    background: var(--color-ouro);
+    color: var(--color-preto);
+    font-size: 0.85rem;
+    border-radius: 999px;
+  }
+  .saltar-conteudo:focus {
+    top: 1rem;
+  }
 }
 
-/* Marca-d'água dourada: filete fino usado em separadores */
-.filete-ouro {
-  background-image: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-ouro) 20%,
-    var(--color-ouro-claro) 50%,
-    var(--color-ouro) 80%,
-    transparent
-  );
-  height: 1px;
+@layer components {
+  /* ------------------------------------------------ detalhes da marca */
+
+  /* Filete dourado usado em separadores */
+  .filete-ouro {
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-ouro) 20%,
+      var(--color-ouro-claro) 50%,
+      var(--color-ouro) 80%,
+      transparent
+    );
+    height: 1px;
+  }
+
+  /* O brilho em relevo do logótipo — só sobre fundo escuro */
+  .texto-ouro {
+    background-image: linear-gradient(
+      180deg,
+      #fbf0c6 0%,
+      var(--color-ouro-claro) 38%,
+      var(--color-ouro) 62%,
+      #8f6d17 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Rótulo espaçado em caixa-alta: identifica, não descreve */
+  .rotulo {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  /* ------------------------------------------------ componentes de base */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0.7rem 1.5rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    transition:
+      background-color 0.18s var(--ease-marca),
+      color 0.18s var(--ease-marca),
+      border-color 0.18s var(--ease-marca),
+      opacity 0.18s var(--ease-marca);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-sm {
+    min-height: 2.25rem;
+    padding: 0.5rem 1rem 0.55rem;
+    font-size: 0.75rem;
+  }
+
+  /* Acção principal: ouro com texto preto */
+  .btn-principal {
+    background-image: linear-gradient(180deg, var(--color-ouro-claro), var(--color-ouro));
+    color: var(--color-preto);
+  }
+  .btn-principal:hover:not(:disabled) {
+    background-image: linear-gradient(180deg, #f0d386, var(--color-ouro-claro));
+  }
+
+  /* Acção forte: tecido com texto marfim */
+  .btn-escuro {
+    background-color: var(--color-preto);
+    color: #fbf8f2;
+  }
+  .btn-escuro:hover:not(:disabled) {
+    background-color: var(--color-carvao-claro);
+  }
+  .tema-escuro .btn-escuro {
+    background-color: #1b1b1b;
+    border-color: var(--color-marfim-300);
+  }
+
+  .btn-contorno {
+    border-color: var(--color-marfim-300);
+    background-color: transparent;
+    color: var(--color-tinta);
+  }
+  .btn-contorno:hover:not(:disabled) {
+    border-color: var(--color-tinta);
+  }
+
+  /* Contorno sobre vídeo ou fundo escuro */
+  .btn-contorno-claro {
+    border-color: rgb(251 248 242 / 0.55);
+    background-color: transparent;
+    color: #fbf8f2;
+  }
+  .btn-contorno-claro:hover:not(:disabled) {
+    border-color: #fbf8f2;
+    background-color: rgb(251 248 242 / 0.08);
+  }
+
+  .btn-perigo {
+    border-color: color-mix(in oklab, var(--color-rubi) 45%, transparent);
+    color: var(--color-rubi);
+    background: transparent;
+  }
+  .btn-perigo:hover:not(:disabled) {
+    background-color: color-mix(in oklab, var(--color-rubi) 10%, transparent);
+  }
+
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .ligacao {
+    color: var(--color-ouro-escuro);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    text-decoration-color: color-mix(in oklab, currentColor 40%, transparent);
+  }
+  .ligacao:hover {
+    text-decoration-color: currentColor;
+  }
+
+  .campo {
+    width: 100%;
+    min-height: 2.75rem;
+    border: 1px solid var(--color-marfim-300);
+    background-color: var(--color-superficie);
+    padding: 0.65rem 0.85rem;
+    font-size: 1rem;
+    border-radius: var(--raio-campo);
+    color: var(--color-tinta);
+    transition: border-color 0.15s ease;
+  }
+  @media (min-width: 640px) {
+    .campo {
+      font-size: 0.9rem;
+    }
+  }
+  .campo::placeholder {
+    color: var(--color-tinta-50);
+  }
+  .campo:focus {
+    border-color: var(--color-ouro);
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ouro) 22%, transparent);
+  }
+
+  .etiqueta {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-tinta-70);
+    margin-bottom: 0.4rem;
+  }
+
+  .cartao {
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-marfim-200);
+    border-radius: var(--raio-cartao);
+  }
+  .tema-escuro .cartao {
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.025), transparent 40%);
+  }
+
+  /* Selos de estado: a cor vem do tom e adapta-se ao tema */
+  .selo {
+    --tom: var(--color-tinta-70);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.22rem 0.6rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    white-space: nowrap;
+    border-radius: 999px;
+    color: var(--tom);
+    background-color: color-mix(in oklab, var(--tom) 11%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tom) 28%, transparent);
+  }
+  .selo::before {
+    content: "";
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background-color: currentColor;
+  }
+  .selo-simples::before {
+    display: none;
+  }
+  .tom-ouro {
+    --tom: var(--color-ouro-escuro);
+  }
+  .tom-verde {
+    --tom: var(--color-verde);
+  }
+  .tom-azul {
+    --tom: var(--color-azul);
+  }
+  .tom-violeta {
+    --tom: var(--color-violeta);
+  }
+  .tom-rubi {
+    --tom: var(--color-rubi);
+  }
+  .tom-neutro {
+    --tom: var(--color-tinta-50);
+  }
+
+  /* Filtros em pílula */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.25rem;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-marfim-300);
+    font-size: 0.8125rem;
+    color: var(--color-tinta-70);
+    white-space: nowrap;
+    transition:
+      border-color 0.15s ease,
+      color 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .chip:hover {
+    border-color: var(--color-tinta);
+    color: var(--color-tinta);
+  }
+  .chip[aria-current="true"],
+  .chip-ativo {
+    background-color: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: var(--color-marfim-50);
+  }
+
+  /* Título de secção com linha dourada curta */
+  .regua::after {
+    content: "";
+    display: block;
+    width: 2.5rem;
+    height: 1px;
+    background-image: linear-gradient(90deg, var(--color-ouro), var(--color-ouro-claro));
+    margin-top: 0.9rem;
+  }
+
+  /* Tabelas do painel */
+  .tabela {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  .tabela th {
+    text-align: left;
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-tinta-50);
+    font-weight: 600;
+    padding: 0.75rem 0.9rem;
+    border-bottom: 1px solid var(--color-marfim-200);
+    white-space: nowrap;
+  }
+  .tabela td {
+    padding: 0.85rem 0.9rem;
+    border-bottom: 1px solid var(--color-marfim-100);
+    vertical-align: middle;
+  }
+  .tabela tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .tabela tbody tr:hover {
+    background-color: var(--color-marfim-100);
+  }
+
+  /* Linha de tempo do acompanhamento da encomenda */
+  .passo-linha::before {
+    content: "";
+    position: absolute;
+    left: 0.44rem;
+    top: 1.1rem;
+    bottom: -0.6rem;
+    width: 1px;
+    background-color: var(--color-marfim-200);
+  }
+  .passo-linha:last-child::before {
+    display: none;
+  }
+
+  /* Barra de rolagem discreta em listas horizontais */
+  .sem-barra {
+    scrollbar-width: none;
+  }
+  .sem-barra::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-/* Texto com o brilho do logótipo — só para títulos sobre fundo escuro */
-.texto-ouro {
-  background-image: linear-gradient(
-    180deg,
-    #f7ecc0 0%,
-    var(--color-ouro-claro) 35%,
-    var(--color-ouro) 60%,
-    #9a7a1c 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* ------------------------------------------------ movimento */
+
+@keyframes aproximar {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+.efeito-aproximar {
+  animation: aproximar 9s var(--ease-marca) both;
 }
 
-/* ------------------------------------------------ componentes de base */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.7rem 1.4rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  border-radius: 2px;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-  cursor: pointer;
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.efeito-surgir {
+  animation: surgir 0.9s var(--ease-marca) both;
 }
 
-/* Acção principal: ouro com texto preto (contraste alto) */
-.btn-principal {
-  background-color: var(--color-ouro);
-  color: var(--color-preto);
-}
-.btn-principal:hover:not(:disabled) {
-  background-color: var(--color-ouro-claro);
-}
-
-/* Acção secundária forte: preto com texto ouro */
-.btn-escuro {
-  background-color: var(--color-preto);
-  color: var(--color-ouro-claro);
-}
-.btn-escuro:hover:not(:disabled) {
-  background-color: var(--color-carvao-claro);
+@keyframes progresso {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
-.btn-contorno {
-  border: 1px solid var(--color-marfim-300);
-  background-color: transparent;
-  color: var(--color-tinta);
-}
-.btn-contorno:hover:not(:disabled) {
-  border-color: var(--color-ouro);
-  background-color: var(--color-marfim-100);
-}
-
-/* Contorno para usar sobre fundo preto */
-.btn-contorno-claro {
-  border: 1px solid rgb(201 162 39 / 0.5);
-  background-color: transparent;
-  color: var(--color-ouro-claro);
-}
-.btn-contorno-claro:hover:not(:disabled) {
-  border-color: var(--color-ouro);
-  background-color: rgb(201 162 39 / 0.12);
-}
-
-.btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.campo {
-  width: 100%;
-  border: 1px solid var(--color-marfim-300);
-  background-color: #fff;
-  padding: 0.65rem 0.8rem;
-  font-size: 0.9rem;
-  border-radius: 2px;
-  color: var(--color-tinta);
-}
-.campo::placeholder {
-  color: var(--color-tinta-50);
-}
-.campo:focus {
-  border-color: var(--color-ouro);
-}
-
-.etiqueta {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-tinta-70);
-  margin-bottom: 0.35rem;
-}
-
-.cartao {
-  background-color: #fff;
-  border: 1px solid var(--color-marfim-200);
-  border-radius: 2px;
-}
-
-.selo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.2rem 0.55rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border-radius: 2px;
-  box-shadow: inset 0 0 0 1px currentColor;
-  opacity: 0.95;
-}
-
-/* Régua fina decorativa por baixo dos títulos */
-.regua::after {
-  content: "";
-  display: block;
-  width: 2.5rem;
-  height: 1px;
-  background-image: linear-gradient(90deg, var(--color-ouro), var(--color-ouro-claro));
-  margin-top: 0.85rem;
-}
-
-/* Tabelas do painel */
-.tabela {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-.tabela th {
-  text-align: left;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-tinta-50);
-  font-weight: 600;
-  padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid var(--color-marfim-200);
-  white-space: nowrap;
-}
-.tabela td {
-  padding: 0.8rem 0.75rem;
-  border-bottom: 1px solid var(--color-marfim-100);
-  vertical-align: middle;
-}
-.tabela tbody tr:hover {
-  background-color: var(--color-marfim-50);
-}
-
-/* Linha de tempo do acompanhamento da encomenda */
-.passo-linha::before {
-  content: "";
-  position: absolute;
-  left: 0.44rem;
-  top: 1.1rem;
-  bottom: -0.6rem;
-  width: 1px;
-  background-color: var(--color-marfim-200);
-}
-.passo-linha:last-child::before {
-  display: none;
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @media print {

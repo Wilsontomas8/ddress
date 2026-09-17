@@ -12,7 +12,9 @@ export default async function LayoutLoja({ children }: { children: React.ReactNo
         nomeLoja={loja.storeName}
         utilizador={sessao ? { nome: sessao.nome, role: sessao.role } : null}
       />
-      <main className="flex-1">{children}</main>
+      <main id="conteudo" className="flex-1">
+        {children}
+      </main>
       <Rodape
         loja={{
           storeName: loja.storeName,

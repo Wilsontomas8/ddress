@@ -3,7 +3,7 @@ import type { Passo } from "@/lib/acompanhamento";
 const CIRCULO: Record<Passo["estado"], string> = {
   feito: "border-verde bg-verde",
   actual: "border-ouro bg-ouro",
-  futuro: "border-marfim-300 bg-white",
+  futuro: "border-marfim-300 bg-superficie",
   falhado: "border-rubi bg-rubi",
 };
 

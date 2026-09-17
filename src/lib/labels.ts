@@ -28,29 +28,29 @@ export function labelSeccao(section: Section): string {
 }
 
 export const ESTADO_PEDIDO: Record<OrderStatus, { label: string; cor: string }> = {
-  NOVO: { label: "Novo", cor: "bg-amber-100 text-amber-900 ring-amber-200" },
-  RECEBIDO: { label: "Recebido", cor: "bg-sky-100 text-sky-900 ring-sky-200" },
-  AGUARDA_PROVA: { label: "Aguarda prova", cor: "bg-violet-100 text-violet-900 ring-violet-200" },
-  CONFIRMADO: { label: "Confirmado", cor: "bg-indigo-100 text-indigo-900 ring-indigo-200" },
-  PAGO: { label: "Pago", cor: "bg-emerald-100 text-emerald-900 ring-emerald-200" },
-  PRONTO: { label: "Pronto para entrega", cor: "bg-teal-100 text-teal-900 ring-teal-200" },
-  ENTREGUE: { label: "Entregue", cor: "bg-stone-200 text-stone-800 ring-stone-300" },
-  EM_ALUGUER: { label: "Em aluguer", cor: "bg-orange-100 text-orange-900 ring-orange-200" },
-  DEVOLVIDO: { label: "Devolvido", cor: "bg-lime-100 text-lime-900 ring-lime-200" },
-  CONCLUIDO: { label: "Concluído", cor: "bg-stone-200 text-stone-700 ring-stone-300" },
-  CANCELADO: { label: "Cancelado", cor: "bg-rose-100 text-rose-900 ring-rose-200" },
+  NOVO: { label: "Novo", cor: "tom-ouro" },
+  RECEBIDO: { label: "Recebido", cor: "tom-azul" },
+  AGUARDA_PROVA: { label: "Aguarda prova", cor: "tom-violeta" },
+  CONFIRMADO: { label: "Confirmado", cor: "tom-azul" },
+  PAGO: { label: "Pago", cor: "tom-verde" },
+  PRONTO: { label: "Pronto para entrega", cor: "tom-verde" },
+  ENTREGUE: { label: "Entregue", cor: "tom-neutro" },
+  EM_ALUGUER: { label: "Em aluguer", cor: "tom-ouro" },
+  DEVOLVIDO: { label: "Devolvido", cor: "tom-verde" },
+  CONCLUIDO: { label: "Concluído", cor: "tom-neutro" },
+  CANCELADO: { label: "Cancelado", cor: "tom-rubi" },
 };
 
 export const ESTADO_PAGAMENTO: Record<PaymentStatus, { label: string; cor: string }> = {
-  PENDENTE: { label: "Por pagar", cor: "bg-amber-100 text-amber-900 ring-amber-200" },
+  PENDENTE: { label: "Por pagar", cor: "tom-ouro" },
   EM_VERIFICACAO: {
     label: "Comprovativo por validar",
-    cor: "bg-sky-100 text-sky-900 ring-sky-200",
+    cor: "tom-azul",
   },
-  PAGO: { label: "Pago", cor: "bg-emerald-100 text-emerald-900 ring-emerald-200" },
-  PARCIAL: { label: "Parcial", cor: "bg-orange-100 text-orange-900 ring-orange-200" },
-  REEMBOLSADO: { label: "Reembolsado", cor: "bg-stone-200 text-stone-700 ring-stone-300" },
-  FALHADO: { label: "Falhado", cor: "bg-rose-100 text-rose-900 ring-rose-200" },
+  PAGO: { label: "Pago", cor: "tom-verde" },
+  PARCIAL: { label: "Parcial", cor: "tom-ouro" },
+  REEMBOLSADO: { label: "Reembolsado", cor: "tom-neutro" },
+  FALHADO: { label: "Falhado", cor: "tom-rubi" },
 };
 
 export const METODO_PAGAMENTO: Record<PaymentMethod, { label: string; descricao: string }> = {
@@ -73,11 +73,11 @@ export const METODO_PAGAMENTO: Record<PaymentMethod, { label: string; descricao:
 };
 
 export const ESTADO_MARCACAO: Record<AppointmentStatus, { label: string; cor: string }> = {
-  PENDENTE: { label: "Por confirmar", cor: "bg-amber-100 text-amber-900 ring-amber-200" },
-  CONFIRMADA: { label: "Confirmada", cor: "bg-emerald-100 text-emerald-900 ring-emerald-200" },
-  REALIZADA: { label: "Realizada", cor: "bg-stone-200 text-stone-700 ring-stone-300" },
-  FALTOU: { label: "Faltou", cor: "bg-rose-100 text-rose-900 ring-rose-200" },
-  CANCELADA: { label: "Cancelada", cor: "bg-stone-200 text-stone-600 ring-stone-300" },
+  PENDENTE: { label: "Por confirmar", cor: "tom-ouro" },
+  CONFIRMADA: { label: "Confirmada", cor: "tom-verde" },
+  REALIZADA: { label: "Realizada", cor: "tom-neutro" },
+  FALTOU: { label: "Faltou", cor: "tom-rubi" },
+  CANCELADA: { label: "Cancelada", cor: "tom-neutro" },
 };
 
 export const ESTADO_RESERVA: Record<ReservationStatus, string> = {
@@ -90,12 +90,12 @@ export const ESTADO_RESERVA: Record<ReservationStatus, string> = {
 };
 
 export const COR_RESERVA: Record<ReservationStatus, string> = {
-  PROVISORIA: "bg-amber-100 text-amber-900",
-  CONFIRMADA: "bg-indigo-100 text-indigo-900",
-  ENTREGUE: "bg-orange-100 text-orange-900",
-  EM_HIGIENIZACAO: "bg-sky-100 text-sky-900",
-  DEVOLVIDA: "bg-emerald-100 text-emerald-900",
-  CANCELADA: "bg-stone-200 text-stone-700",
+  PROVISORIA: "tom-ouro",
+  CONFIRMADA: "tom-azul",
+  ENTREGUE: "tom-ouro",
+  EM_HIGIENIZACAO: "tom-azul",
+  DEVOLVIDA: "tom-verde",
+  CANCELADA: "tom-neutro",
 };
 
 export const TIPO_ITEM: Record<ItemKind, string> = {

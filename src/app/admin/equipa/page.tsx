@@ -52,7 +52,7 @@ export default async function PaginaEquipa() {
                 <td className="text-xs">{formatNumericDate(u.createdAt)}</td>
                 <td>
                   {u.active ? (
-                    <span className="selo bg-emerald-100 text-emerald-900">Ativa</span>
+                    <span className="selo tom-verde">Ativa</span>
                   ) : (
                     <span className="selo bg-marfim-200 text-tinta-70">Suspensa</span>
                   )}

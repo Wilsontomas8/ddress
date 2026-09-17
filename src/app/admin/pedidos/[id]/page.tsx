@@ -109,7 +109,7 @@ export default async function PaginaPedidoAdmin({
         <div className="flex flex-wrap gap-2">
           <span className={`selo ${estado.cor}`}>{estado.label}</span>
           <span className={`selo ${estadoPagamento.cor}`}>{estadoPagamento.label}</span>
-          {pedido.needsFitting && <span className="selo bg-violet-100 text-violet-900">Exige prova</span>}
+          {pedido.needsFitting && <span className="selo tom-violeta">Exige prova</span>}
         </div>
       </div>
 

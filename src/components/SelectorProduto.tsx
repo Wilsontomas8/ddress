@@ -186,7 +186,7 @@ export default function SelectorProduto({ produto, imagem, variantes }: Props) {
               type="button"
               onClick={() => setModo(m)}
               className={`px-5 py-2 text-sm transition-colors ${
-                modo === m ? "bg-tinta text-marfim-50" : "bg-white text-tinta-70 hover:bg-marfim-100"
+                modo === m ? "bg-tinta text-marfim-50" : "bg-superficie text-tinta-70 hover:bg-marfim-100"
               }`}
             >
               {m === "VENDA" ? "Comprar" : "Alugar"}
@@ -246,7 +246,7 @@ export default function SelectorProduto({ produto, imagem, variantes }: Props) {
                     ativo
                       ? "border-ouro bg-ouro text-preto"
                       : livre
-                        ? "border-marfim-300 bg-white hover:border-tinta"
+                        ? "border-marfim-300 bg-superficie hover:border-tinta"
                         : "border-marfim-200 bg-marfim-100 text-tinta-50"
                   }`}
                   title={
@@ -354,7 +354,7 @@ export default function SelectorProduto({ produto, imagem, variantes }: Props) {
           <>
             <p className="etiqueta">Prova no ateliê</p>
             <div className="mb-4 space-y-2">
-              <label className="flex cursor-pointer items-start gap-2.5 border border-marfim-300 bg-white p-3 text-sm">
+              <label className="flex cursor-pointer items-start gap-2.5 border border-marfim-300 bg-superficie p-3 text-sm">
                 <input
                   type="radio"
                   name="residencia-prova"
@@ -370,7 +370,7 @@ export default function SelectorProduto({ produto, imagem, variantes }: Props) {
                 </span>
               </label>
 
-              <label className="flex cursor-pointer items-start gap-2.5 border border-marfim-300 bg-white p-3 text-sm">
+              <label className="flex cursor-pointer items-start gap-2.5 border border-marfim-300 bg-superficie p-3 text-sm">
                 <input
                   type="radio"
                   name="residencia-prova"

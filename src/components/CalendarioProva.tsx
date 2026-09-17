@@ -168,7 +168,7 @@ export default function CalendarioProva({ variantId, valor, onChange, legenda }:
                     className={`shrink-0 border px-3 py-2 text-center transition-colors ${
                       ativo
                         ? "border-ouro bg-ouro text-preto"
-                        : "border-marfim-300 bg-white text-tinta hover:border-tinta"
+                        : "border-marfim-300 bg-superficie text-tinta hover:border-tinta"
                     }`}
                   >
                     <span className="block text-[0.65rem] tracking-wider uppercase opacity-80">
@@ -214,7 +214,7 @@ export default function CalendarioProva({ variantId, valor, onChange, legenda }:
                         escolhido
                           ? "border-ouro bg-ouro text-preto"
                           : s.disponivel
-                            ? "border-marfim-300 bg-white hover:border-tinta"
+                            ? "border-marfim-300 bg-superficie hover:border-tinta"
                             : "cursor-not-allowed border-marfim-200 bg-marfim-100 text-tinta-50 line-through"
                       }`}
                     >

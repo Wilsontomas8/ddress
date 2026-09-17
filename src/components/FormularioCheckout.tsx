@@ -221,7 +221,7 @@ export default function FormularioCheckout({ loja, cartaoAtivo, utilizador }: Pr
           </p>
 
           <div className="space-y-3">
-            <label className="flex cursor-pointer items-start gap-3 border border-marfim-300 bg-white p-4">
+            <label className="flex cursor-pointer items-start gap-3 border border-marfim-300 bg-superficie p-4">
               <input
                 type="radio"
                 name="residencia"
@@ -240,7 +240,7 @@ export default function FormularioCheckout({ loja, cartaoAtivo, utilizador }: Pr
               </span>
             </label>
 
-            <label className="flex cursor-pointer items-start gap-3 border border-marfim-300 bg-white p-4">
+            <label className="flex cursor-pointer items-start gap-3 border border-marfim-300 bg-superficie p-4">
               <input
                 type="radio"
                 name="residencia"
@@ -286,7 +286,7 @@ export default function FormularioCheckout({ loja, cartaoAtivo, utilizador }: Pr
         <section>
           <h2 className="font-display text-xl">Entrega</h2>
           <div className="mt-4 space-y-3">
-            <label className="flex cursor-pointer items-start gap-3 border border-marfim-300 bg-white p-4">
+            <label className="flex cursor-pointer items-start gap-3 border border-marfim-300 bg-superficie p-4">
               <input
                 type="radio"
                 name="entrega"
@@ -299,7 +299,7 @@ export default function FormularioCheckout({ loja, cartaoAtivo, utilizador }: Pr
                 <span className="block text-sm text-tinta-70">{loja.address} · sem custo</span>
               </span>
             </label>
-            <label className="flex cursor-pointer items-start gap-3 border border-marfim-300 bg-white p-4">
+            <label className="flex cursor-pointer items-start gap-3 border border-marfim-300 bg-superficie p-4">
               <input
                 type="radio"
                 name="entrega"
@@ -340,7 +340,7 @@ export default function FormularioCheckout({ loja, cartaoAtivo, utilizador }: Pr
                 key={m.valor}
                 className={`flex items-start gap-3 border p-4 ${
                   m.ativo
-                    ? "cursor-pointer border-marfim-300 bg-white"
+                    ? "cursor-pointer border-marfim-300 bg-superficie"
                     : "cursor-not-allowed border-marfim-200 bg-marfim-100 opacity-60"
                 }`}
               >

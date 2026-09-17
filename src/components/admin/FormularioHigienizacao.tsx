@@ -95,7 +95,7 @@ export default function FormularioHigienizacao({
       )}
 
       {dados.status === "EM_HIGIENIZACAO" && !aviso && (
-        <p className="mb-3 border-l-2 border-sky-400 bg-marfim-50 px-3 py-2 text-sm">
+        <p className="mb-3 border-l-2 border-azul bg-marfim-50 px-3 py-2 text-sm">
           Em higienização. Volta ao site a{" "}
           <strong>{formatNumericDate(dados.disponivelEm)}</strong>.
         </p>

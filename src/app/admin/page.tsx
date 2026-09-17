@@ -286,10 +286,10 @@ export default async function PainelResumo() {
                         <span
                           className={`selo ${
                             emHigienizacao
-                              ? "bg-sky-100 text-sky-900"
+                              ? "tom-azul"
                               : atrasada
-                                ? "bg-rose-100 text-rose-900"
-                                : "bg-amber-100 text-amber-900"
+                                ? "tom-rubi"
+                                : "tom-ouro"
                           }`}
                         >
                           {emHigienizacao ? "Em higienização" : atrasada ? "Em atraso" : "A caminho"}

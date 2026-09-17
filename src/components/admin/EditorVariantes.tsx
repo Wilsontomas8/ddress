@@ -195,9 +195,9 @@ export default function EditorVariantes({
                     ) : v.rentalStock === 0 ? (
                       <span className="text-xs text-tinta-50">só venda</span>
                     ) : v.disponivel ? (
-                      <span className="selo bg-emerald-100 text-emerald-900">Disponível</span>
+                      <span className="selo tom-verde">Disponível</span>
                     ) : (
-                      <span className="selo bg-amber-100 text-amber-900">
+                      <span className="selo tom-ouro">
                         Volta a {formatNumericDate(v.disponivelDe)}
                       </span>
                     )}

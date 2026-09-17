@@ -115,7 +115,7 @@ export default async function PaginaProdutosAdmin() {
                   </td>
                   <td>
                     {p.active ? (
-                      <span className="selo bg-emerald-100 text-emerald-900">Visível</span>
+                      <span className="selo tom-verde">Visível</span>
                     ) : (
                       <span className="selo bg-marfim-200 text-tinta-70">Escondida</span>
                     )}

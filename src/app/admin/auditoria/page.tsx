@@ -22,13 +22,13 @@ const TIPOS = [
 ];
 
 const COR_DO_TIPO: Record<string, string> = {
-  CRIADO: "bg-marfim-100 text-tinta-70",
-  ATRIBUIDO: "bg-sky-100 text-sky-900",
-  ESTADO: "bg-indigo-100 text-indigo-900",
-  PAGAMENTO: "bg-emerald-100 text-emerald-900",
-  PROVA: "bg-violet-100 text-violet-900",
-  ENTREGA: "bg-amber-100 text-amber-900",
-  RECOLHA: "bg-orange-100 text-orange-900",
+  CRIADO: "tom-neutro",
+  ATRIBUIDO: "tom-azul",
+  ESTADO: "tom-azul",
+  PAGAMENTO: "tom-verde",
+  PROVA: "tom-violeta",
+  ENTREGA: "tom-ouro",
+  RECOLHA: "tom-ouro",
   NOTA: "bg-marfim-200 text-tinta-70",
 };
 
@@ -133,7 +133,7 @@ export default async function PaginaAuditoria({
                 <tr key={e.id}>
                   <td className="whitespace-nowrap text-xs">{formatDateTime(e.createdAt)}</td>
                   <td>
-                    <span className={`selo ${COR_DO_TIPO[e.type] ?? "bg-marfim-100 text-tinta-70"}`}>
+                    <span className={`selo ${COR_DO_TIPO[e.type] ?? "tom-neutro"}`}>
                       {e.type}
                     </span>
                   </td>

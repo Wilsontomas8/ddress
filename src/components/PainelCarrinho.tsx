@@ -56,7 +56,7 @@ export default function PainelCarrinho() {
                   </Link>
                   <p className="text-sm text-tinta-70">{i.variante}</p>
                 </div>
-                <span className="selo bg-marfim-100 text-tinta-70">
+                <span className="selo tom-neutro">
                   {i.tipo === "VENDA" ? "Compra" : "Aluguer"}
                 </span>
               </div>

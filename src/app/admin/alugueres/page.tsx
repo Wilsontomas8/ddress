@@ -155,7 +155,7 @@ export default async function PaginaAlugueres() {
                       <td>
                         <span
                           className={`selo ${
-                            atrasada ? "bg-rose-100 text-rose-900" : COR_RESERVA[r.status]
+                            atrasada ? "tom-rubi" : COR_RESERVA[r.status]
                           }`}
                         >
                           {atrasada ? "Em atraso" : ESTADO_RESERVA[r.status]}
@@ -222,9 +222,9 @@ export default async function PaginaAlugueres() {
                     <td>{p.v.rentalStock}</td>
                     <td>
                       {e.disponivel ? (
-                        <span className="selo bg-emerald-100 text-emerald-900">Disponível</span>
+                        <span className="selo tom-verde">Disponível</span>
                       ) : (
-                        <span className="selo bg-amber-100 text-amber-900">
+                        <span className="selo tom-ouro">
                           Volta a {formatNumericDate(e.disponivelDe)}
                         </span>
                       )}
