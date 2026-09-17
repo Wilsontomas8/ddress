@@ -9,6 +9,7 @@
  * painel a funcionar.
  */
 
+import { createHash } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { sql } from "drizzle-orm";
 import type { BaseDeDados } from "./index";
@@ -50,7 +51,16 @@ function somaDias(d: Date, n: number): Date {
   return x;
 }
 
-const uid = () => crypto.randomUUID();
+/**
+ * Identificadores estáveis: a mesma semente gera sempre os mesmos ids.
+ * Assim, onde a demonstração é recriada em várias instâncias (base embutida
+ * na Vercel), uma sessão iniciada numa instância é reconhecida nas outras.
+ */
+let contadorDeIds = 0;
+function uid(): string {
+  const h = createHash("sha256").update(`ddress-semente-${++contadorDeIds}`).digest("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
+}
 
 // ------------------------------------------------------------- catálogo
 
@@ -424,6 +434,7 @@ export async function semear(
   opcoes: OpcoesDaSemente = {}
 ) {
   const publica = opcoes.modo === "publica";
+  contadorDeIds = 0;
   avisar("A limpar as tabelas...");
   await db.execute(sql`
     TRUNCATE TABLE
