@@ -35,6 +35,7 @@ import { exigirAdmin, exigirEquipa, exigirSeccao, hashPassword } from "@/lib/aut
 import { ACCOES } from "@/lib/permissoes";
 import { addDays, formatNumericDate, parseDay, today } from "@/lib/dates";
 import { ESTADO_PEDIDO, PROXIMOS_ESTADOS } from "@/lib/labels";
+import { libertarPedidoNaTransacao } from "@/lib/cancelamento";
 
 type Resultado = { ok: true; mensagem?: string } | { ok: false; erro: string };
 
@@ -194,30 +195,8 @@ export async function mudarEstadoPedido(
     }
 
     if (novoEstado === "CANCELADO") {
-      await tx
-        .update(rentalReservations)
-        .set({ status: "CANCELADA", updatedAt: new Date() })
-        .where(eq(rentalReservations.orderId, orderId));
-
-      // devolve ao stock as peças que tinham sido vendidas
-      const itens = await tx.select().from(orderItems).where(eq(orderItems.orderId, orderId));
-      for (const i of itens.filter((x) => x.kind === "VENDA")) {
-        await tx
-          .update(productVariants)
-          .set({ saleStock: sql`${productVariants.saleStock} + ${i.quantity}` })
-          .where(eq(productVariants.id, i.variantId));
-      }
-
-      // marcações deste pedido deixam de fazer sentido
-      await tx
-        .update(appointments)
-        .set({ status: "CANCELADA", updatedAt: new Date() })
-        .where(
-          and(
-            eq(appointments.orderId, orderId),
-            inArray(appointments.status, ["PENDENTE", "CONFIRMADA"])
-          )
-        );
+      // liberta as peças, repõe o stock vendido e cancela as provas
+      await libertarPedidoNaTransacao(tx, orderId);
     }
   });
 
@@ -803,6 +782,7 @@ export async function guardarDefinicoes(formData: FormData): Promise<Resultado> 
       slotCapacity: Math.max(1, numero(formData.get("slotCapacity")) || 1),
       minNoticeHours: Math.max(0, numero(formData.get("minNoticeHours"))),
       bookingHorizonDays: Math.max(7, numero(formData.get("bookingHorizonDays")) || 45),
+      reservationExpiryHours: Math.min(168, Math.max(1, numero(formData.get("reservationExpiryHours")) || 24)),
       closedDates: feriados,
       updatedAt: new Date(),
     })

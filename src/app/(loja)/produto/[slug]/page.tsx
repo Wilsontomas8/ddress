@@ -5,6 +5,7 @@ import CartaoProduto from "@/components/CartaoProduto";
 import { getProduto, listarProdutos } from "@/lib/catalogo";
 import { labelSeccao, slugDaSeccao } from "@/lib/labels";
 import { toISODay } from "@/lib/dates";
+import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,7 @@ export default async function PaginaProduto({ params }: { params: Promise<{ slug
   if (!dados) notFound();
 
   const { produto, categoria, imagens, variantes } = dados;
+  const loja = await getSettings();
 
   const relacionados = (
     await listarProdutos({ seccao: produto.section, categoriaSlug: categoria.slug, limite: 5 })
@@ -112,6 +114,7 @@ export default async function PaginaProduto({ params }: { params: Promise<{ slug
                 requiresFitting: produto.requiresFitting,
               }}
               imagem={imagens[0]?.url ?? null}
+              horasLimiteProva={loja.reservationExpiryHours}
               variantes={variantes.map((v) => ({
                 id: v.id,
                 size: v.size,

@@ -10,7 +10,7 @@
  */
 
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 import {
   calendarioDeProva,
   estadoDaPeca,
@@ -33,6 +33,13 @@ function reserva(
     blockUntil: addDays(hoje, fimOffset),
     status,
   };
+}
+
+/** Primeiro dia com o ateliê aberto a partir de hoje + n (evita domingos) */
+function diaAberto(n: number): Date {
+  let d = addDays(hoje, n);
+  while (!config.openDays.includes(d.getUTCDay())) d = addDays(d, 1);
+  return d;
 }
 
 // ------------------------------------------------- estado da peça
@@ -212,7 +219,7 @@ test("não se marca prova para hoje com 24h de antecedência exigidas", () => {
 });
 
 test("quando as cabines estão cheias o horário desaparece", () => {
-  const dia = addDays(hoje, 3);
+  const dia = diaAberto(3);
   const iso = toISODay(dia);
   const dias = calendarioDeProva({
     config,
@@ -228,7 +235,7 @@ test("quando as cabines estão cheias o horário desaparece", () => {
 });
 
 test("a mesma peça não pode estar em duas provas à mesma hora", () => {
-  const dia = addDays(hoje, 3);
+  const dia = diaAberto(3);
   const iso = toISODay(dia);
   const dias = calendarioDeProva({
     config,

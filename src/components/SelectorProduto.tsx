@@ -6,6 +6,7 @@ import CalendarioProva, { type HorarioEscolhido } from "./CalendarioProva";
 import { useCarrinho } from "./Carrinho";
 import { formatKz } from "@/lib/money";
 import { DIAS_SEMANA, MESES, parseDay, toISODay } from "@/lib/dates";
+import { limiteDaProva } from "@/lib/expiracao";
 
 export type VarianteCliente = {
   id: string;
@@ -37,6 +38,8 @@ type Props = {
   };
   imagem: string | null;
   variantes: VarianteCliente[];
+  /** Horas antes do levantamento até às quais a prova tem de acontecer */
+  horasLimiteProva: number;
 };
 
 type Orcamento = {
@@ -47,7 +50,7 @@ type Orcamento = {
   pacoteFimDeSemana: boolean;
 };
 
-export default function SelectorProduto({ produto, imagem, variantes }: Props) {
+export default function SelectorProduto({ produto, imagem, variantes, horasLimiteProva }: Props) {
   const router = useRouter();
   const { adicionar } = useCarrinho();
 
@@ -92,6 +95,8 @@ export default function SelectorProduto({ produto, imagem, variantes }: Props) {
   const provaPedidaPelaPeca = modo === "ALUGUER" && produto.requiresFitting;
   const provaObrigatoria = provaPedidaPelaPeca && !foraDeLuanda;
   const mostrarCalendario = provaObrigatoria || querProva;
+  const limiteProva =
+    provaPedidaPelaPeca && inicio ? limiteDaProva(parseDay(inicio), horasLimiteProva).toISOString() : null;
 
   // Primeiro dia que esta peça pode ser levantada
   const primeiroDia = variante?.aluguer.disponivelDe ?? toISODay(new Date());
@@ -365,7 +370,7 @@ export default function SelectorProduto({ produto, imagem, variantes }: Props) {
                 <span>
                   <span className="block font-medium">Resido em Luanda — vou provar no ateliê</span>
                   <span className="block text-tinta-70">
-                    Marcação obrigatória, com pelo menos 24 horas de antecedência.
+                    Marcação obrigatória, até {horasLimiteProva} horas antes do levantamento.
                   </span>
                 </span>
               </label>
@@ -409,7 +414,7 @@ export default function SelectorProduto({ produto, imagem, variantes }: Props) {
         )}
 
         {mostrarCalendario && (
-          <CalendarioProva variantId={variantId} valor={prova} onChange={setProva} />
+          <CalendarioProva variantId={variantId} valor={prova} onChange={setProva} limite={limiteProva} />
         )}
 
         {provaPedidaPelaPeca && foraDeLuanda && (

@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { DIAS_SEMANA, MESES, parseDay } from "@/lib/dates";
+import { momentoDaProva } from "@/lib/expiracao";
 
 export type HorarioEscolhido = { data: string; hora: string; fim: string };
 
@@ -34,11 +35,13 @@ type Props = {
   onChange: (v: HorarioEscolhido | null) => void;
   /** Texto de ajuda por cima da grelha */
   legenda?: string;
+  /** Instante (ISO) até ao qual a prova tem de acontecer — reservas de aluguer */
+  limite?: string | null;
 };
 
 const JANELA = 21;
 
-export default function CalendarioProva({ variantId, valor, onChange, legenda }: Props) {
+export default function CalendarioProva({ variantId, valor, onChange, legenda, limite }: Props) {
   const [dados, setDados] = useState<Resposta | null>(null);
   const [aCarregar, setACarregar] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -99,7 +102,19 @@ export default function CalendarioProva({ variantId, valor, onChange, legenda }:
     );
   }
 
-  const dias = dados?.dias ?? [];
+  // Horas depois do limite da reserva não servem: a reserva expiraria.
+  const limiteMs = limite ? new Date(limite).getTime() : null;
+  const dentroDoLimite = (data: string, hora: string) =>
+    limiteMs === null || momentoDaProva(parseDay(data), hora).getTime() <= limiteMs;
+  const dias = (dados?.dias ?? []).map((d) => {
+    if (limiteMs === null) return d;
+    const slots = d.slots.map((s) =>
+      s.disponivel && !dentroDoLimite(d.data, s.hora)
+        ? { ...s, disponivel: false, motivo: "Depois do limite da reserva" }
+        : s
+    );
+    return { ...d, slots, aberto: d.aberto && slots.some((s) => s.disponivel) };
+  });
   const diasAbertos = dias.filter((d) => d.aberto);
   const dia = dias.find((d) => d.data === diaAberto) ?? null;
 
@@ -117,6 +132,13 @@ export default function CalendarioProva({ variantId, valor, onChange, legenda }:
   return (
     <div>
       {legenda && <p className="mb-2 text-sm text-tinta-70">{legenda}</p>}
+
+      {limite && (
+        <p className="mb-3 border-l-2 border-ouro bg-marfim-100 px-3 py-2 text-sm text-tinta-70">
+          A prova tem de ser até <strong className="text-tinta">{formatarInstante(limite)}</strong>.
+          Sem prova até lá, a reserva expira e a peça volta a ficar livre.
+        </p>
+      )}
 
       {dados?.peca && dados.peca.exemplares > 0 && !dados.peca.disponivel && (
         <p className="mb-3 border-l-2 border-ouro bg-marfim-100 px-3 py-2 text-sm text-tinta-70">
@@ -243,6 +265,17 @@ export default function CalendarioProva({ variantId, valor, onChange, legenda }:
       )}
     </div>
   );
+}
+
+function formatarInstante(iso: string) {
+  return new Intl.DateTimeFormat("pt-PT", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Africa/Luanda",
+  }).format(new Date(iso));
 }
 
 function formatarData(iso: string) {

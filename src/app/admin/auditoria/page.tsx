@@ -19,6 +19,7 @@ const TIPOS = [
   { valor: "ENTREGA", texto: "Entregas" },
   { valor: "RECOLHA", texto: "Recolhas" },
   { valor: "NOTA", texto: "Notas internas" },
+  { valor: "EXPIRADO", texto: "Reservas expiradas" },
 ];
 
 const COR_DO_TIPO: Record<string, string> = {
@@ -29,7 +30,8 @@ const COR_DO_TIPO: Record<string, string> = {
   PROVA: "tom-violeta",
   ENTREGA: "tom-ouro",
   RECOLHA: "tom-ouro",
-  NOTA: "bg-marfim-200 text-tinta-70",
+  NOTA: "tom-neutro",
+  EXPIRADO: "tom-rubi",
 };
 
 export default async function PaginaAuditoria({

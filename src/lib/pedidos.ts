@@ -20,7 +20,8 @@ import {
   orcamentoAluguer,
   periodoEstaLivre,
 } from "./availability";
-import { addDays, parseDay, toISODay } from "./dates";
+import { addDays, formatDateTime, parseDay, toISODay } from "./dates";
+import { limiteDaProva, momentoDaProva } from "./expiracao";
 import { formatarCodigoMarcacao, horarioLivre, proximoNumeroMarcacao } from "./marcacoes";
 import { getSettings } from "./settings";
 
@@ -275,6 +276,18 @@ export async function criarPedido(dados: DadosPedido, userId: string | null) {
   // Os horários de prova ainda estão livres?
   for (const l of linhas) {
     if (!l.prova) continue;
+
+    // Numa reserva de aluguer a prova tem de acontecer com a antecedência
+    // mínima, senão a reserva expiraria logo (ver lib/expiracao.ts).
+    if (l.kind === "ALUGUER" && l.exigeProva && l.startDate) {
+      const limite = limiteDaProva(l.startDate, loja.reservationExpiryHours);
+      if (momentoDaProva(parseDay(l.prova.data), l.prova.hora).getTime() > limite.getTime()) {
+        throw new ErroDePedido(
+          `A prova de "${l.productName}" tem de ser pelo menos ${loja.reservationExpiryHours} horas antes do levantamento. Escolha uma hora até ${formatDateTime(limite)}.`
+        );
+      }
+    }
+
     const ok = await horarioLivre({
       variantId: l.variantId,
       data: parseDay(l.prova.data),

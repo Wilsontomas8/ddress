@@ -24,6 +24,7 @@ type Props = {
     slotCapacity: number;
     minNoticeHours: number;
     bookingHorizonDays: number;
+    reservationExpiryHours: number;
     closedDates: string[];
   };
 };
@@ -185,6 +186,19 @@ export default function FormularioDefinicoes({ loja }: Props) {
               inputMode="numeric"
               defaultValue={loja.bookingHorizonDays}
             />
+          </label>
+          <label>
+            <span className="etiqueta">Reserva expira sem prova (horas antes)</span>
+            <input
+              className="campo"
+              name="reservationExpiryHours"
+              inputMode="numeric"
+              defaultValue={loja.reservationExpiryHours}
+              aria-describedby="ajuda-expiracao"
+            />
+            <span id="ajuda-expiracao" className="mt-1 block text-xs text-tinta-50">
+              Se faltarem estas horas para o levantamento e não houver prova marcada até lá, a reserva é cancelada e a peça volta ao site.
+            </span>
           </label>
         </div>
 

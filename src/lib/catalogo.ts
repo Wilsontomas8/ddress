@@ -11,6 +11,7 @@ import {
   type Section,
 } from "@/db/schema";
 import { ESTADOS_QUE_BLOQUEIAM, estadoDaPeca, type EstadoDaPeca } from "./availability";
+import { expirarSeNecessario } from "./reservas";
 
 export type VarianteComEstado = {
   id: string;
@@ -55,6 +56,9 @@ export async function estadoDasPecas(
 ): Promise<Map<string, EstadoDaPeca>> {
   const mapa = new Map<string, EstadoDaPeca>();
   if (variantIds.length === 0) return mapa;
+
+  // Reservas expiradas sem prova libertam a peça antes de a mostrarmos.
+  await expirarSeNecessario();
 
   const [variantes, reservas] = await Promise.all([
     db

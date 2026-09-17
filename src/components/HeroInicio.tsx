@@ -123,6 +123,7 @@ export default function HeroInicio({ slides }: { slides: Slide[] }) {
             {slide.titulo.map((linha, i) => (
               <span key={i} className={`block ${i === slide.titulo.length - 1 ? "italic texto-ouro pb-2" : ""}`}>
                 {linha}
+                {i < slide.titulo.length - 1 && " "}
               </span>
             ))}
           </h1>

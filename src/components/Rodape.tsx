@@ -106,8 +106,7 @@ export default function Rodape({ loja }: Props) {
 
         {/* Assinatura em escala de página, como remate */}
         <div className="mt-20 border-t border-white/10 pt-10" aria-hidden="true">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/marca/ddress-nome.png" alt="" className="w-full max-w-5xl opacity-90" />
+          <p className="texto-ouro font-display text-[clamp(4rem,17vw,15rem)] leading-[0.8] tracking-[0.04em] select-none">DDRESS</p>
         </div>
 
         <div className="mt-10 flex flex-col gap-2 text-xs text-marfim-400 sm:flex-row sm:justify-between">
