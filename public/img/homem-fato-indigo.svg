@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" width="900" height="1200" role="img" aria-label="Fato Índigo">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#111A29"/>
+      <stop offset="100%" stop-color="#070C14"/>
+    </linearGradient>
+    <radialGradient id="luz" cx="0.5" cy="0.32" r="0.62">
+      <stop offset="0%" stop-color="#e3c76a" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#e3c76a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vinheta" cx="0.5" cy="0.45" r="0.78">
+      <stop offset="60%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.45"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="1200" fill="url(#g)"/>
+  <rect width="900" height="1200" fill="url(#luz)"/>
+  <rect width="900" height="1200" fill="url(#vinheta)"/>
+  <g transform="translate(0,60) scale(1,0.98)" fill="#28374F" fill-opacity="1" stroke="#c9a227" stroke-opacity="0.5" stroke-linejoin="round">
+    <path d="M300 300 L372 256 L450 292 L528 256 L600 300 L642 520 L596 536 L586 900 L314 900 L304 536 L258 520 Z" />
+         <path d="M372 256 L450 292 L440 900 L416 900 L400 420 Z" fill="#000" fill-opacity="0.14" stroke="none" />
+         <path d="M528 256 L450 292 L460 900 L484 900 L500 420 Z" fill="#000" fill-opacity="0.07" stroke="none" />
+         <path d="M450 292 L422 424 L478 424 Z" fill="#fff" fill-opacity="0.55" stroke="none" />
+         <circle cx="450" cy="556" r="9" fill="#fff" fill-opacity="0.45" stroke="none" />
+         <circle cx="450" cy="636" r="9" fill="#fff" fill-opacity="0.45" stroke="none" />
+  </g>
+  <g opacity="0.5">
+    <circle cx="450" cy="1085" r="3" fill="#c9a227"/>
+    <line x1="330" y1="1085" x2="420" y2="1085" stroke="#c9a227" stroke-width="1"/>
+    <line x1="480" y1="1085" x2="570" y2="1085" stroke="#c9a227" stroke-width="1"/>
+  </g>
+  <text x="450" y="1140" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="34" fill="#c9a227" letter-spacing="2">Fato Índigo</text>
+</svg>

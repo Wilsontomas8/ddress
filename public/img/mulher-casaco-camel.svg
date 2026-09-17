@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" width="900" height="1200" role="img" aria-label="Casaco de Lã Camel">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#f4ecdc"/>
+      <stop offset="100%" stop-color="#e6d7bb"/>
+    </linearGradient>
+    <radialGradient id="luz" cx="0.5" cy="0.32" r="0.62">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vinheta" cx="0.5" cy="0.45" r="0.78">
+      <stop offset="60%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.05"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="1200" fill="url(#g)"/>
+  <rect width="900" height="1200" fill="url(#luz)"/>
+  <rect width="900" height="1200" fill="url(#vinheta)"/>
+  <g transform="translate(0,60) scale(1,0.98)" fill="#bfa875" fill-opacity="0.9" stroke="#8a6b14" stroke-opacity="0.35" stroke-linejoin="round">
+    <path d="M300 300 L380 255 L450 300 L520 255 L600 300 L650 560 L600 580 L590 900 L310 900 L300 580 L250 560 Z" />
+           <path d="M450 300 L450 900" fill="none" stroke-width="6" />
+           <circle cx="450" cy="470" r="9" />
+           <circle cx="450" cy="560" r="9" />
+  </g>
+  <g opacity="0.5">
+    <circle cx="450" cy="1085" r="3" fill="#8a6b14"/>
+    <line x1="330" y1="1085" x2="420" y2="1085" stroke="#8a6b14" stroke-width="1"/>
+    <line x1="480" y1="1085" x2="570" y2="1085" stroke="#8a6b14" stroke-width="1"/>
+  </g>
+  <text x="450" y="1140" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="34" fill="#8a6b14" letter-spacing="2">Casaco de Lã Camel</text>
+</svg>

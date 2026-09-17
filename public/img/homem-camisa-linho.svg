@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" width="900" height="1200" role="img" aria-label="Camisa de Linho">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#faf7f1"/>
+      <stop offset="100%" stop-color="#efe7d7"/>
+    </linearGradient>
+    <radialGradient id="luz" cx="0.5" cy="0.32" r="0.62">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vinheta" cx="0.5" cy="0.45" r="0.78">
+      <stop offset="60%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.05"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="1200" fill="url(#g)"/>
+  <rect width="900" height="1200" fill="url(#luz)"/>
+  <rect width="900" height="1200" fill="url(#vinheta)"/>
+  <g transform="translate(0,60) scale(1,0.98)" fill="#cbbb98" fill-opacity="0.9" stroke="#8a6b14" stroke-opacity="0.35" stroke-linejoin="round">
+    <path d="M320 292 L400 256 L450 314 L500 256 L580 292 L620 470 L562 492 L562 862 L338 862 L338 492 L280 470 Z" />
+           <path d="M398 250 L450 316 L502 250 L474 238 L450 272 L426 238 Z" fill="#fff" fill-opacity="0.5" stroke="none" />
+           <path d="M450 314 L450 862" fill="none" stroke-width="5" />
+           <circle cx="450" cy="470" r="7" fill="#fff" fill-opacity="0.45" stroke="none" />
+           <circle cx="450" cy="580" r="7" fill="#fff" fill-opacity="0.45" stroke="none" />
+           <circle cx="450" cy="690" r="7" fill="#fff" fill-opacity="0.45" stroke="none" />
+  </g>
+  <g opacity="0.5">
+    <circle cx="450" cy="1085" r="3" fill="#8a6b14"/>
+    <line x1="330" y1="1085" x2="420" y2="1085" stroke="#8a6b14" stroke-width="1"/>
+    <line x1="480" y1="1085" x2="570" y2="1085" stroke="#8a6b14" stroke-width="1"/>
+  </g>
+  <text x="450" y="1140" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="34" fill="#8a6b14" letter-spacing="2">Camisa de Linho</text>
+</svg>

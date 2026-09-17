@@ -1,0 +1,261 @@
+@import "tailwindcss";
+
+/* =====================================================================
+   Sistema visual — DDRESS
+   Tirado do logótipo: ouro sobre preto, com marfim para as áreas de
+   leitura. Sem fontes externas: tudo assenta em tipos já presentes no
+   sistema, para o site abrir depressa mesmo com internet fraca.
+
+   Regra de contraste seguida em todo o sistema:
+     · ouro sobre preto  → decoração e texto de destaque
+     · ouro-escuro       → texto e ligações sobre marfim
+     · fundo ouro        → sempre com texto preto por cima
+   ===================================================================== */
+
+@theme {
+  /* --- fundos claros (áreas de leitura) --- */
+  --color-marfim-50: #faf7f1;
+  --color-marfim-100: #f2ece0;
+  --color-marfim-200: #e6dcc8;
+  --color-marfim-300: #d5c7a8;
+  --color-marfim-400: #b9a576;
+
+  /* --- escuros (cabeçalho, rodapé, destaques) --- */
+  --color-preto: #0b0a09;
+  --color-carvao: #17150f;
+  --color-carvao-claro: #272319;
+
+  /* --- texto --- */
+  --color-tinta: #17150f;
+  --color-tinta-70: #4a443a;
+  --color-tinta-50: #726b5c;
+
+  /* --- ouro da marca --- */
+  --color-ouro: #c9a227;
+  --color-ouro-claro: #e3c76a;
+  --color-ouro-palido: #f3e4b2;
+  --color-ouro-escuro: #8a6b14;
+
+  /* --- estados --- */
+  --color-verde: #3f6b53;
+  --color-rubi: #9b2c2c;
+
+  --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-marfim-50);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+.display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Foco visível e consistente em todo o site */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-ouro);
+  outline-offset: 2px;
+}
+
+/* Marca-d'água dourada: filete fino usado em separadores */
+.filete-ouro {
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-ouro) 20%,
+    var(--color-ouro-claro) 50%,
+    var(--color-ouro) 80%,
+    transparent
+  );
+  height: 1px;
+}
+
+/* Texto com o brilho do logótipo — só para títulos sobre fundo escuro */
+.texto-ouro {
+  background-image: linear-gradient(
+    180deg,
+    #f7ecc0 0%,
+    var(--color-ouro-claro) 35%,
+    var(--color-ouro) 60%,
+    #9a7a1c 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ------------------------------------------------ componentes de base */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-radius: 2px;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+}
+
+/* Acção principal: ouro com texto preto (contraste alto) */
+.btn-principal {
+  background-color: var(--color-ouro);
+  color: var(--color-preto);
+}
+.btn-principal:hover:not(:disabled) {
+  background-color: var(--color-ouro-claro);
+}
+
+/* Acção secundária forte: preto com texto ouro */
+.btn-escuro {
+  background-color: var(--color-preto);
+  color: var(--color-ouro-claro);
+}
+.btn-escuro:hover:not(:disabled) {
+  background-color: var(--color-carvao-claro);
+}
+
+.btn-contorno {
+  border: 1px solid var(--color-marfim-300);
+  background-color: transparent;
+  color: var(--color-tinta);
+}
+.btn-contorno:hover:not(:disabled) {
+  border-color: var(--color-ouro);
+  background-color: var(--color-marfim-100);
+}
+
+/* Contorno para usar sobre fundo preto */
+.btn-contorno-claro {
+  border: 1px solid rgb(201 162 39 / 0.5);
+  background-color: transparent;
+  color: var(--color-ouro-claro);
+}
+.btn-contorno-claro:hover:not(:disabled) {
+  border-color: var(--color-ouro);
+  background-color: rgb(201 162 39 / 0.12);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.campo {
+  width: 100%;
+  border: 1px solid var(--color-marfim-300);
+  background-color: #fff;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.9rem;
+  border-radius: 2px;
+  color: var(--color-tinta);
+}
+.campo::placeholder {
+  color: var(--color-tinta-50);
+}
+.campo:focus {
+  border-color: var(--color-ouro);
+}
+
+.etiqueta {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-tinta-70);
+  margin-bottom: 0.35rem;
+}
+
+.cartao {
+  background-color: #fff;
+  border: 1px solid var(--color-marfim-200);
+  border-radius: 2px;
+}
+
+.selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px currentColor;
+  opacity: 0.95;
+}
+
+/* Régua fina decorativa por baixo dos títulos */
+.regua::after {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 1px;
+  background-image: linear-gradient(90deg, var(--color-ouro), var(--color-ouro-claro));
+  margin-top: 0.85rem;
+}
+
+/* Tabelas do painel */
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.tabela th {
+  text-align: left;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-tinta-50);
+  font-weight: 600;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--color-marfim-200);
+  white-space: nowrap;
+}
+.tabela td {
+  padding: 0.8rem 0.75rem;
+  border-bottom: 1px solid var(--color-marfim-100);
+  vertical-align: middle;
+}
+.tabela tbody tr:hover {
+  background-color: var(--color-marfim-50);
+}
+
+/* Linha de tempo do acompanhamento da encomenda */
+.passo-linha::before {
+  content: "";
+  position: absolute;
+  left: 0.44rem;
+  top: 1.1rem;
+  bottom: -0.6rem;
+  width: 1px;
+  background-color: var(--color-marfim-200);
+}
+.passo-linha:last-child::before {
+  display: none;
+}
+
+@media print {
+  .sem-impressao {
+    display: none !important;
+  }
+}
