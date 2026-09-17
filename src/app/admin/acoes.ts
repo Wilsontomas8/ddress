@@ -750,6 +750,17 @@ export async function apagarVariante(id: string, productId: string): Promise<Res
 //  EQUIPA E DEFINIÇÕES  (só administrador)
 // =====================================================================
 
+/** Só https, para o mapa não abrir nada estranho */
+function ligacaoSegura(v: string): string {
+  return /^https:\/\//i.test(v) ? v : "";
+}
+
+/** Coordenada decimal; vazio quando não é um número */
+function coordenada(v: string): string {
+  const n = Number(v.replace(",", "."));
+  return v && Number.isFinite(n) ? String(n) : "";
+}
+
 export async function guardarDefinicoes(formData: FormData): Promise<Resultado> {
   // Administrador e suporte técnico podem alterar definições da loja.
   await exigirSeccao("definicoes", "editar");
@@ -771,6 +782,9 @@ export async function guardarDefinicoes(formData: FormData): Promise<Resultado> 
       whatsapp: texto(formData.get("whatsapp")),
       email: texto(formData.get("email")),
       address: texto(formData.get("address")),
+      mapsUrl: ligacaoSegura(texto(formData.get("mapsUrl"))),
+      latitude: coordenada(texto(formData.get("latitude"))),
+      longitude: coordenada(texto(formData.get("longitude"))),
       bankName: texto(formData.get("bankName")),
       accountHolder: texto(formData.get("accountHolder")),
       iban: texto(formData.get("iban")),

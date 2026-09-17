@@ -8,6 +8,7 @@ type Props = {
     whatsapp: string;
     email: string;
     address: string;
+    mapsUrl: string;
   };
 };
 
@@ -72,7 +73,15 @@ export default function Rodape({ loja }: Props) {
           <div>
             <p className="rotulo text-ouro-claro">Contactos</p>
             <ul className="mt-5 space-y-3 text-sm">
-              <li className="text-marfim-200">{loja.address}</li>
+              <li>
+                {loja.mapsUrl ? (
+                  <a href={loja.mapsUrl} target="_blank" rel="noreferrer" className="text-marfim-200 transition-colors hover:text-ouro-claro">
+                    {loja.address}
+                  </a>
+                ) : (
+                  <span className="text-marfim-200">{loja.address}</span>
+                )}
+              </li>
               <li>
                 <a href={`tel:${telefone}`} className="num transition-colors hover:text-ouro-claro">
                   {loja.phone}

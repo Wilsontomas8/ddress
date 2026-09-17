@@ -11,7 +11,9 @@ export type AreaAuditada =
   | "PRODUTO"
   | "EQUIPA"
   | "DEFINICOES"
-  | "NOTIFICACAO";
+  | "NOTIFICACAO"
+  | "CONTA"
+  | "FICHEIRO";
 
 /** Regista uma alteração que não pertence a um pedido (ver order_events). */
 export async function registarAlteracao(opts: {

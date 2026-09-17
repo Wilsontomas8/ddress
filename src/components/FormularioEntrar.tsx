@@ -61,7 +61,12 @@ export default function FormularioEntrar() {
       </label>
 
       <label className="mt-4 block">
-        <span className="etiqueta">Palavra-passe</span>
+        <span className="etiqueta flex items-baseline justify-between gap-3">
+          Palavra-passe
+          <Link href="/recuperar" className="text-[0.6875rem] tracking-normal text-ouro-escuro normal-case underline underline-offset-4">
+            Esqueci-me
+          </Link>
+        </span>
         <input
           type="password"
           className="campo"

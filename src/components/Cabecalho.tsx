@@ -77,6 +77,7 @@ export default function Cabecalho({ nomeLoja, utilizador }: Props) {
     "rotulo text-marfim-100/85 transition-colors hover:text-ouro-claro aria-[current=page]:text-ouro-claro";
 
   return (
+    <>
     <header
       className={`${inicio ? "fixed" : "sticky"} inset-x-0 top-0 z-50 text-marfim-50 transition-colors duration-300 ${
         transparente ? "bg-transparent" : "bg-preto/95 backdrop-blur-md"
@@ -208,10 +209,12 @@ export default function Cabecalho({ nomeLoja, utilizador }: Props) {
       )}
 
       {!transparente && <div className="filete-ouro opacity-60" />}
+    </header>
 
-      {/* menu em ecrãs pequenos */}
+      {/* menu em ecrãs pequenos — fora do cabeçalho, senão o backdrop-blur
+          do cabeçalho torna-se o contentor do painel e recorta-o */}
       {menuAberto && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-preto lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
+        <div className="fixed inset-0 z-[60] flex flex-col bg-preto lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="flex h-16 items-center justify-between px-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/marca/ddress-nome.png" alt={nomeLoja} className="h-5 w-auto" />
@@ -248,6 +251,6 @@ export default function Cabecalho({ nomeLoja, utilizador }: Props) {
           </nav>
         </div>
       )}
-    </header>
+    </>
   );
 }

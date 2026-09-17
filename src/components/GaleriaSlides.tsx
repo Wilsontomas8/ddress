@@ -31,6 +31,8 @@ export default function GaleriaSlides({ imagens, rotulo, proporcao = "aspect-[4/
 
   return (
     <div
+      // min-w-0 impede que a fila de miniaturas estique a coluna no telemóvel
+      className="w-full min-w-0"
       aria-roledescription="carrossel"
       aria-label={rotulo}
       onKeyDown={(e) => {

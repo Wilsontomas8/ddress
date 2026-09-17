@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import GaleriaSlides from "@/components/GaleriaSlides";
+import MapaDaLoja from "@/components/MapaDaLoja";
 import IconeDestaque from "@/components/IconeDestaque";
 import { getPagina } from "@/lib/conteudos";
 import { getSettings } from "@/lib/settings";
@@ -128,8 +129,11 @@ export default async function PaginaQuemSomos() {
                 Venha conhecer <span className="texto-ouro italic">o nosso espaço.</span>
               </h2>
               <p className="mt-6 max-w-md text-marfim-200">
-                Provas com hora marcada, num ateliê pensado para experimentar com calma. {loja.address}.
+                Provas com hora marcada, num ateliê pensado para experimentar com calma.
               </p>
+              <div className="mt-8 max-w-md">
+                <MapaDaLoja endereco={loja.address} latitude={loja.latitude} longitude={loja.longitude} mapsUrl={loja.mapsUrl} claro />
+              </div>
               <div className="mt-10 flex flex-wrap gap-3">
                 <Link href="/marcacao" className="btn btn-principal">
                   Marcar prova
@@ -152,7 +156,8 @@ export default async function PaginaQuemSomos() {
             {loja.phone}
           </a>
         </p>
-        <p className="mt-4 text-sm text-tinta-70">
+        <p className="mt-4 text-sm text-tinta-70">{loja.address}</p>
+        <p className="mt-2 text-sm text-tinta-70">
           {loja.email && (
             <>
               <a href={`mailto:${loja.email}`} className="ligacao">

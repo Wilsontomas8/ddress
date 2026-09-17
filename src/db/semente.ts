@@ -536,7 +536,8 @@ export async function semear(
       products, categories, users, settings,
       notifications, service_request_products, service_requests, partners,
       product_suggestions, collection_products, collections, media_items,
-      page_highlights, pages, role_permissions, audit_logs
+      page_highlights, pages, role_permissions, audit_logs,
+      password_resets, login_attempts, order_documents, uploads
     RESTART IDENTITY CASCADE
   `);
 
@@ -549,7 +550,10 @@ export async function semear(
     phone: "+244 923 033 861",
     whatsapp: "+244 923 033 861",
     email: "atendimentoddress@gmail.com",
-    address: "Rua Amílcar Cabral, 120 — Ingombota, Luanda",
+    address: "Cassenda, rua da Shoprite, Luanda, Angola",
+    mapsUrl: "https://www.google.com/maps/place/DDRESS+-+Aluguer+e+Venda+de+Vestidos/@-8.8403695,13.2282616,17z",
+    latitude: "-8.8403748",
+    longitude: "13.2308365",
     bankName: "Banco BAI",
     accountHolder: "DDRESS — Aluguer e Venda de Vestidos, Lda.",
     iban: "AO06 0040 0000 1234 5678 9012 3",
@@ -1361,7 +1365,7 @@ async function semearConteudos(db: BaseDeDados, _varianteIds: Map<string, string
   ];
   await db.insert(pageHighlights).values(destaques.map(([icon, text], position) => ({ id: uid(), pageId: paginaId, icon, text, position })));
   await db.insert(mediaItems).values([
-    { id: uid(), ownerType: "PAGINA", ownerId: paginaId, kind: "VIDEO", url: "/quem-somos/video.mp4", poster: "/quem-somos/video.jpg", title: "O ateliê DDRESS", position: 0 },
+    { id: uid(), ownerType: "PAGINA", ownerId: paginaId, kind: "VIDEO", url: "/quem-somos/video.mp4", poster: "/quem-somos/video.jpg", title: "A DDRESS por dentro", position: 0 },
     { id: uid(), ownerType: "PAGINA", ownerId: paginaId, kind: "IMAGEM", url: "/quem-somos/principal.jpg", title: "A equipa DDRESS", position: 1 },
     ...GALERIA_QUEM_SOMOS.map((url, i) => ({ id: uid(), ownerType: "PAGINA", ownerId: paginaId, kind: "IMAGEM", url, title: "", position: i + 2 })),
   ]);

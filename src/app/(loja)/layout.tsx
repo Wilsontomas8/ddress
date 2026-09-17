@@ -23,6 +23,7 @@ export default async function LayoutLoja({ children }: { children: React.ReactNo
           whatsapp: loja.whatsapp,
           email: loja.email,
           address: loja.address,
+          mapsUrl: loja.mapsUrl,
         }}
       />
     </div>

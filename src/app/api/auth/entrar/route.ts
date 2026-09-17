@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { iniciarSessao, verifyPassword } from "@/lib/auth";
+import { enderecoDoPedido, registarTentativa, tentativasEsgotadas } from "@/lib/contas";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,14 @@ export async function POST(request: Request) {
     const dados = esquema.parse(await request.json());
     const email = dados.email.toLowerCase().trim();
 
+    const ip = enderecoDoPedido(request);
+    if (await tentativasEsgotadas(email, ip)) {
+      return NextResponse.json(
+        { erro: "Demasiadas tentativas. Tente dentro de 15 minutos ou defina nova palavra-passe." },
+        { status: 429 }
+      );
+    }
+
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
     // Mensagem igual para e-mail errado e palavra-passe errada: não
@@ -28,8 +37,15 @@ export async function POST(request: Request) {
       { status: 401 }
     );
 
-    if (!user || !user.active) return invalido;
-    if (!(await verifyPassword(dados.password, user.passwordHash))) return invalido;
+    if (!user || !user.active) {
+      await registarTentativa(email, ip, false);
+      return invalido;
+    }
+    if (!(await verifyPassword(dados.password, user.passwordHash))) {
+      await registarTentativa(email, ip, false);
+      return invalido;
+    }
+    await registarTentativa(email, ip, true);
 
     await iniciarSessao({
       id: user.id,

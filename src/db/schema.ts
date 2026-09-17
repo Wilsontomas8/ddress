@@ -509,6 +509,11 @@ export const settings = pgTable("settings", {
   /** Vazio enquanto a loja não tiver e-mail próprio — o site esconde-o */
   email: text("email").notNull().default(""),
   address: text("address").notNull().default("Luanda, Angola"),
+  /** Ligação do Google Maps para "abrir no mapa" */
+  mapsUrl: text("maps_url").notNull().default(""),
+  /** Coordenadas do ateliê, para o mapa da página Quem somos */
+  latitude: text("latitude").notNull().default(""),
+  longitude: text("longitude").notNull().default(""),
 
   // --- método TRANSFERÊNCIA ---
   bankName: text("bank_name").notNull().default("Banco BAI"),
@@ -811,6 +816,82 @@ export const auditLogs = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("audit_logs_area_idx").on(t.area, t.createdAt)]
+);
+
+// --------------------------------------------------------------------
+//  CONTAS: RECUPERAÇÃO DE PALAVRA-PASSE E TENTATIVAS DE ENTRADA
+// --------------------------------------------------------------------
+
+/** Pedido de nova palavra-passe. Guardamos só o resumo do código. */
+export const passwordResets = pgTable(
+  "password_resets",
+  {
+    id: id(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("password_resets_token_key").on(t.tokenHash), index("password_resets_user_idx").on(t.userId, t.createdAt)]
+);
+
+/** Entradas certas e erradas: travão a tentativas repetidas e registo. */
+export const loginAttempts = pgTable(
+  "login_attempts",
+  {
+    id: id(),
+    email: text("email").notNull(),
+    ip: text("ip").notNull().default(""),
+    ok: boolean("ok").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("login_attempts_email_idx").on(t.email, t.createdAt), index("login_attempts_ip_idx").on(t.ip, t.createdAt)]
+);
+
+// --------------------------------------------------------------------
+//  FICHEIROS CARREGADOS E DOCUMENTOS DO PEDIDO (factura, comprovativo)
+// --------------------------------------------------------------------
+
+export const uploads = pgTable(
+  "uploads",
+  {
+    id: id(),
+    /** Endereço público do ficheiro */
+    url: text("url").notNull(),
+    /** Caminho no armazenamento (Supabase Storage ou pasta local) */
+    path: text("path").notNull().default(""),
+    /** "IMAGEM" | "VIDEO" | "DOCUMENTO" */
+    kind: text("kind").notNull().default("IMAGEM"),
+    contentType: text("content_type").notNull().default(""),
+    size: integer("size").notNull().default(0),
+    originalName: text("original_name").notNull().default(""),
+    uploadedById: text("uploaded_by_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("uploads_created_idx").on(t.createdAt)]
+);
+
+/** Factura do CEGID, comprovativo de pagamento ou outro papel do pedido */
+export const orderDocuments = pgTable(
+  "order_documents",
+  {
+    id: id(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    /** "FACTURA" | "COMPROVATIVO" | "OUTRO" */
+    kind: text("kind").notNull().default("FACTURA"),
+    /** Número da factura no CEGID, quando existe */
+    reference: text("reference").notNull().default(""),
+    url: text("url").notNull(),
+    note: text("note").notNull().default(""),
+    uploadedById: text("uploaded_by_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("order_documents_order_idx").on(t.orderId, t.createdAt)]
 );
 
 // --------------------------------------------------------------------

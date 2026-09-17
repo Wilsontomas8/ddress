@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { auditLogs, orderEvents, orders, users } from "@/db/schema";
 import { exigirAcesso } from "@/lib/guarda";
 import { formatDateTime } from "@/lib/dates";
+import { tentativasRecentes } from "@/lib/contas";
 import { PAPEL } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ const TIPOS = [
   { valor: "NOTA", texto: "Notas internas" },
   { valor: "EXPIRADO", texto: "Reservas expiradas" },
   { valor: "PAINEL", texto: "Catálogo, conteúdos e permissões" },
+  { valor: "CONTAS", texto: "Entradas nas contas" },
 ];
 
 const COR_DO_TIPO: Record<string, string> = {
@@ -55,6 +57,8 @@ export default async function PaginaAuditoria({
   const procura = um(sp.q)?.trim();
 
   const doPainel = tipo === "PAINEL";
+  const deContas = tipo === "CONTAS";
+  const entradas = deContas ? await tentativasRecentes(200) : [];
   const condicoes = [];
   if (tipo && !doPainel) condicoes.push(eq(orderEvents.type, tipo));
   if (procura) {
@@ -68,7 +72,9 @@ export default async function PaginaAuditoria({
     );
   }
 
-  const registos = doPainel
+  const registos = deContas
+    ? []
+    : doPainel
     ? await db
         .select({
           e: {
@@ -158,7 +164,46 @@ export default async function PaginaAuditoria({
         })}
       </nav>
 
-      {registos.length === 0 ? (
+      {deContas ? (
+        <div className="cartao mt-6 overflow-x-auto">
+          <table className="tabela">
+            <thead>
+              <tr>
+                <th>Quando</th>
+                <th>Resultado</th>
+                <th>E-mail</th>
+                <th>Quem</th>
+                <th>Endereço</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entradas.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-sm text-tinta-50">
+                    Ainda não há entradas registadas.
+                  </td>
+                </tr>
+              ) : (
+                entradas.map((t) => (
+                  <tr key={t.id}>
+                    <td className="text-xs whitespace-nowrap">{formatDateTime(t.createdAt)}</td>
+                    <td>
+                      <span className={`selo ${t.ok ? "tom-verde" : "tom-rubi"}`}>{t.ok ? "Entrou" : "Falhou"}</span>
+                    </td>
+                    <td className="text-sm">{t.email}</td>
+                    <td className="text-xs">{t.nome ?? <span className="text-tinta-50">sem conta</span>}</td>
+                    <td className="num text-xs">{t.ip || "—"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+          <p className="border-t border-marfim-200 p-4 text-xs text-tinta-50">
+            Oito tentativas erradas no mesmo e-mail travam a entrada durante 15 minutos. Quem se enganou pode definir nova
+            palavra-passe em /recuperar.
+          </p>
+        </div>
+      ) : registos.length === 0 ? (
         <p className="cartao mt-6 p-8 text-center text-sm text-tinta-70">
           Não há registos com estes filtros.
         </p>

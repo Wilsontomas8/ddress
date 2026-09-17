@@ -12,6 +12,9 @@ type Props = {
     whatsapp: string;
     email: string;
     address: string;
+    mapsUrl: string;
+    latitude: string;
+    longitude: string;
     bankName: string;
     accountHolder: string;
     iban: string;
@@ -63,6 +66,18 @@ export default function FormularioDefinicoes({ loja }: Props) {
           <label className="sm:col-span-2">
             <span className="etiqueta">Morada</span>
             <input className="campo" name="address" defaultValue={loja.address} />
+          </label>
+          <label className="sm:col-span-2">
+            <span className="etiqueta">Ligação do Google Maps</span>
+            <input className="campo" name="mapsUrl" defaultValue={loja.mapsUrl} placeholder="https://www.google.com/maps/place/…" />
+          </label>
+          <label>
+            <span className="etiqueta">Latitude do ateliê</span>
+            <input className="campo num" name="latitude" defaultValue={loja.latitude} placeholder="-8.8403748" />
+          </label>
+          <label>
+            <span className="etiqueta">Longitude do ateliê</span>
+            <input className="campo num" name="longitude" defaultValue={loja.longitude} placeholder="13.2308365" />
           </label>
           <label>
             <span className="etiqueta">Telefone</span>
