@@ -63,9 +63,17 @@ Não correr `next build` com o servidor de desenvolvimento ligado na mesma pasta
 Um commit por passo, mensagem em português no imperativo (`Acrescenta…`, `Corrige…`), com
 corpo a explicar o porquê. `main` publica na Vercel a cada push.
 
+## Ficheiros e serviços externos
+
+Carregamentos passam por `src/lib/armazenamento.ts` (Supabase Storage quando há chaves,
+`public/carregados` no computador, recusa explicada na Vercel sem Storage). E-mail em
+`src/lib/email.ts`, Telegram em `src/lib/telegram.ts`: sem variáveis, o aviso fica
+`SEM_CONFIGURACAO` e nada falha. Nunca gravar ficheiros directamente em `public/` a partir
+de código que corra na Vercel.
+
 ## Contactos da loja
 
 E-mail: `atendimentoddress@gmail.com` · Instagram: `@ddress_aluguer_de_vestidos`.
-Telefone/WhatsApp: +244 923 033 861. IBAN e Multicaixa na semente são **de exemplo** até a
+Telefone/WhatsApp: +244 923 033 861. Loja: Cassenda, rua da Shoprite, Luanda. IBAN e Multicaixa na semente são **de exemplo** até a
 DDRESS indicar os reais. Parceira de maquilhagem: Val Makeup Antoluv (@val_makeup.antoluv).
 As colecções Gala, Noite e Cerimónia são provisórias até importar o catálogo de WhatsApp.

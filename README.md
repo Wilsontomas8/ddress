@@ -128,11 +128,35 @@ administrador.
   sapatos sugeridos e ligações de WhatsApp para a cliente e a parceira.
 - **Sapatos sugeridos** por peça: *Painel → Peças → (peça)*; aparecem em “Complete o look”.
 
+### Página inicial e conteúdos no painel
+
+O vídeo de fundo e os slides da página inicial vivem em *Painel → Conteúdos →
+Página inicial*; a página Quem somos em *Painel → Conteúdos*. Enquanto não
+houver slides guardados, o site usa os textos instalados em
+`src/conteudo/slides-inicio.ts`.
+
+### Ficheiros e facturas
+
+O painel carrega fotografias, vídeos e PDF (limites: 8 MB imagem, 60 MB vídeo,
+12 MB documento). Com `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` definidos,
+os ficheiros vão para o Supabase Storage (bucket `ddress`, público); no
+computador ficam em `public/carregados`. A factura do CEGID anexa-se ao
+pedido em *Painel → Pedidos → (pedido) → Documentos* e a cliente vê-a na
+página do pedido dela. O relatório mensal tem versão em folha A4:
+*Painel → Relatórios → Imprimir / PDF*.
+
+### Contas
+
+“Esqueci-me” envia uma ligação que serve uma vez e expira numa hora. Oito
+tentativas erradas no mesmo e-mail travam a entrada durante 15 minutos
+(o dobro por endereço). Tudo fica em *Painel → Auditoria → Entradas nas contas*.
+
 ### Notificações
 
 Um pedido novo, cada mudança de estado relevante e cada solicitação criam avisos:
-no site (área da cliente e *Painel → Notificações*, com contador) e por e-mail para a
-cliente, a loja (e-mail das Definições) e a parceira. Os avisos têm chave única, por isso
+no site (área da cliente e *Painel → Notificações*, com contador), por e-mail para a
+cliente, a loja (e-mail das Definições) e a parceira, e no Telegram da equipa quando
+`TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` existirem. Os avisos têm chave única, por isso
 nunca saem repetidos. Sem SMTP/Resend configurado, ficam “por configurar” e podem ser
 reenviados — ver `.env.example`.
 
@@ -165,13 +189,15 @@ Detalhe completo em [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ```bash
 npm test          # Vitest: disponibilidade, preços, calendário, expiração, permissões, componentes (53 testes)
+npm run e2e:contas     # contas, telemóvel e mapa
+npm run e2e:ficheiros  # carregamentos, facturas e relatório
 npm run e2e       # percursos num navegador real contra http://localhost:3100
 npm run capturas  # capturas a 390/768/1360 px com verificação de transbordo
 ```
 
 Os percursos e as capturas precisam do site a correr (`npx next dev -p 3100`) e usam o
 Chromium do Playwright, ou o Edge/Chrome instalados. Última execução: perfis 13/13,
-cliente 10/10, painel 15/15, conteúdos 16/16.
+cliente 10/10, painel 15/15, conteúdos 19/19, contas 11/11, ficheiros 6/6.
 
 ---
 
@@ -198,6 +224,13 @@ cada arranque a frio; pedidos criados podem desaparecer). Serve para aprovar a F
    O endpoint só indica que variáveis existem; nunca mostra valores.
 5. E-mails: defina `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` (palavra-passe de aplicação do Gmail
    atendimentoddress@gmail.com) ou `RESEND_API_KEY`.
+6. Ficheiros: em Supabase → **Storage**, criar o bucket **ddress** (público) e definir na
+   Vercel `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`.
+7. Opcional: `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` para a equipa receber os pedidos no
+   Telegram; `NEXT_PUBLIC_SITE_URL` com o endereço final.
+
+**/api/saude** passa a mostrar também, em `servicos`, se o e-mail, os ficheiros e o Telegram
+estão configurados.
 
 Nenhum segredo entra no repositório — o repositório é **público**.
 
@@ -209,14 +242,15 @@ Nenhum segredo entra no repositório — o repositório é **público**.
   demonstração.
 - Importar os vestidos reais do catálogo de WhatsApp (as colecções Gala, Noite e Cerimónia são
   provisórias).
-- Restantes conteúdos no painel: banners e vídeo da página inicial, menus, FAQ, campanhas.
-- Carregamento de fotografias e comprovativos (Supabase Storage).
-- Factura CEGID: anexação manual (âmbito base); integração automática depende da API e licença.
+- Restantes conteúdos no painel: menus, FAQ e campanhas (página inicial, colecções, Quem
+  somos, parceiros e documentos já se gerem no painel).
+- Storage ligado na Vercel (o carregamento já está feito; falta o bucket e as chaves).
+- Factura CEGID: anexação manual já feita; integração automática depende da API e licença.
 - Credenciais de e-mail na Vercel (o envio já está feito); WhatsApp Business API e Telegram;
   newsletter com consentimento e avisos de disponibilidade.
-- Relatórios em PDF (hoje: CSV para Excel).
-- Recuperação de palavra-passe, limite de tentativas e auditoria global (login, preços,
-  stock, definições).
+- Relatórios: CSV para Excel e folha A4 para PDF já feitos; falta envio automático mensal.
+- Auditoria de preços e stock ao nível do campo (recuperação de palavra-passe, limite de
+  tentativas e auditoria de contas já feitos).
 - Pagamento com cartão, se houver contrato com operador.
 
 ---
@@ -234,7 +268,8 @@ src/
   components/admin/    PainelShell, GraficoArea e formulários do painel
   conteudo/            textos e vídeo da página inicial
   db/                  schema, ligação, migrações, semente, implantação
-  lib/                 regras de negócio: availability, expiracao, reservas, pedidos,
+  lib/                 regras de negócio: armazenamento, contas, telegram, availability,
+                       expiracao, reservas, pedidos,
                        marcacoes, permissoes, auth, conteudos, solicitacoes, notificacoes,
                        email, whatsapp, auditoria
 drizzle/               migrações SQL versionadas

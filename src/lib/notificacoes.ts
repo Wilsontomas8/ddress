@@ -3,6 +3,7 @@ import { and, count, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { notifications, orders, partners, serviceRequests } from "@/db/schema";
 import { enviarEmail } from "./email";
+import { enviarTelegram, telegramConfigurado } from "./telegram";
 import { formatKz } from "./money";
 import { getSettings } from "./settings";
 import { ROTULO_SOLICITACAO } from "./solicitacoes-rotulos";
@@ -13,7 +14,7 @@ import { ROTULO_SOLICITACAO } from "./solicitacoes-rotulos";
  * Cada aviso fica registado (tabela notifications) com o canal e o estado,
  * e tem uma chave única: chamar duas vezes para o mesmo acontecimento não
  * duplica nada. O canal SITE aparece no painel (loja) ou na conta
- * (cliente); o canal EMAIL tenta enviar e guarda o resultado.
+ * (cliente); os canais EMAIL e TELEGRAM tentam enviar e guardam o resultado.
  *
  * Os avisos nunca fazem falhar a operação que os originou.
  */
@@ -22,7 +23,7 @@ type Publico = "CLIENTE" | "LOJA" | "PARCEIRO";
 
 type NovoAviso = {
   publico: Publico;
-  canal: "SITE" | "EMAIL";
+  canal: "SITE" | "EMAIL" | "TELEGRAM";
   chave: string;
   titulo: string;
   corpo: string;
@@ -57,14 +58,19 @@ async function criarAviso(a: NovoAviso) {
     .onConflictDoNothing({ target: notifications.dedupeKey })
     .returning();
 
-  if (!criado || a.canal !== "EMAIL" || !a.destinatario) return;
+  if (!criado || a.canal === "SITE") return;
+  if (a.canal === "EMAIL" && !a.destinatario) return;
 
-  const envio = await enviarEmail({
-    para: a.destinatario,
-    assunto: a.titulo,
-    texto: a.corpo,
-    ligacao: a.ligacao ? `${urlDoSite()}${a.ligacao}` : null,
-  });
+  const ligacaoCompleta = a.ligacao ? `${urlDoSite()}${a.ligacao}` : null;
+  const envio =
+    a.canal === "TELEGRAM"
+      ? await enviarTelegram(a.titulo, a.corpo, ligacaoCompleta)
+      : await enviarEmail({
+          para: a.destinatario!,
+          assunto: a.titulo,
+          texto: a.corpo,
+          ligacao: ligacaoCompleta,
+        });
   await db
     .update(notifications)
     .set(
@@ -101,6 +107,9 @@ export async function avisarPedidoCriado(orderId: string) {
 
     const corpoLoja = `Novo pedido ${p.number} de ${p.customerName} (${p.customerPhone}).\nTotal: ${formatKz(p.total)}${p.needsFitting ? "\nTem peças que exigem prova no ateliê." : ""}${p.customerNote ? `\nNota da cliente: ${p.customerNote}` : ""}`;
     await criarAviso({ publico: "LOJA", canal: "SITE", chave: `pedido:${p.id}:criado`, titulo: `Novo pedido ${p.number}`, corpo: corpoLoja, ligacao: `/admin/pedidos/${p.id}`, orderId: p.id });
+    if (telegramConfigurado()) {
+      await criarAviso({ publico: "LOJA", canal: "TELEGRAM", chave: `pedido:${p.id}:criado`, titulo: `Novo pedido ${p.number}`, corpo: corpoLoja, ligacao: `/admin/pedidos/${p.id}`, orderId: p.id });
+    }
     if (loja.email) {
       await criarAviso({ publico: "LOJA", canal: "EMAIL", chave: `pedido:${p.id}:criado`, titulo: `Novo pedido ${p.number} — ${p.customerName}`, corpo: corpoLoja, ligacao: `/admin/pedidos/${p.id}`, destinatario: loja.email, orderId: p.id });
     }
@@ -148,6 +157,9 @@ export async function avisarSolicitacaoCriada(requestId: string) {
 
     const corpoLoja = `Nova solicitação ${s.code}: ${tipo}${parceira ? ` com ${parceira.name}` : ""}.\nCliente: ${s.customerName} (${s.customerPhone})${detalhe}`;
     await criarAviso({ publico: "LOJA", canal: "SITE", chave, titulo: `Nova solicitação ${s.code} — ${tipo}`, corpo: corpoLoja, ligacao: `/admin/solicitacoes/${s.id}`, requestId: s.id });
+    if (telegramConfigurado()) {
+      await criarAviso({ publico: "LOJA", canal: "TELEGRAM", chave, titulo: `Nova solicitação ${s.code} — ${tipo}`, corpo: corpoLoja, ligacao: `/admin/solicitacoes/${s.id}`, requestId: s.id });
+    }
     if (loja.email) await criarAviso({ publico: "LOJA", canal: "EMAIL", chave, titulo: `Nova solicitação ${s.code} — ${tipo}`, corpo: corpoLoja, ligacao: `/admin/solicitacoes/${s.id}`, destinatario: loja.email, requestId: s.id });
     if (parceira?.email) {
       await criarAviso({ publico: "PARCEIRO", canal: "EMAIL", chave, titulo: `DDRESS — nova cliente para ${tipo.toLowerCase()} (${s.code})`, corpo: `Olá, ${parceira.name}.\n\nA DDRESS tem uma nova cliente interessada nos seus serviços.\nCliente: ${s.customerName} (${s.customerPhone})${detalhe}`, destinatario: parceira.email, requestId: s.id });

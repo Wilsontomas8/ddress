@@ -126,6 +126,31 @@ try {
   const r2 = await admin.request.get(`${BASE}/colecoes/percurso-teste`);
   passo("Colecção apagada deixa de existir", r2.status() === 404, `estado ${r2.status()}`);
 
+  // Slide novo na página inicial
+  await admin.goto(`${BASE}/admin/conteudos/inicio`, { waitUntil: "domcontentloaded" });
+  await hidratado(admin, "aside, nav");
+  const novo = admin.locator("form").last();
+  await novo.locator('input[name="titleTop"]').fill("Percurso de teste");
+  await novo.locator('input[name="titleBottom"]').fill("no ar.");
+  await novo.locator('input[name="kicker"]').fill("Slide criado pelo percurso");
+  await novo.locator('input[name="position"]').fill("-1");
+  await novo.getByRole("button", { name: "Criar slide" }).click();
+  await admin.getByText("Slide guardado.").first().waitFor({ timeout: 45000 });
+  passo("Slide da página inicial criado no painel", true);
+
+  const inicio = await admin.request.get(`${BASE}/`);
+  const html = await inicio.text();
+  passo("Página inicial mostra o slide novo", html.includes("Percurso de teste"));
+
+  await admin.goto(`${BASE}/admin/conteudos/inicio`, { waitUntil: "domcontentloaded" });
+  await hidratado(admin, "aside, nav");
+  await admin.getByText("Percurso de teste", { exact: false }).first().click();
+  admin.once("dialog", (d) => d.accept());
+  await admin.getByRole("button", { name: "Apagar slide" }).first().click();
+  await admin.waitForTimeout(2000);
+  const depois = await (await admin.request.get(`${BASE}/`)).text();
+  passo("Slide apagado sai da página inicial", !depois.includes("Percurso de teste"));
+
   // Permissões: funcionário passa a só ver os conteúdos
   await admin.goto(`${BASE}/admin/permissoes`, { waitUntil: "domcontentloaded" });
   await hidratado(admin, "aside, nav");

@@ -13,6 +13,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import {
   collectionProducts,
+  homeSlides,
   collections,
   mediaItems,
   notifications,
@@ -576,6 +577,67 @@ export async function apagarDocumentoDoPedido(id: string): Promise<Resultado> {
     });
     revalidatePath(`/admin/pedidos/${d.orderId}`);
     return { ok: true, mensagem: "Documento removido." };
+  } catch (e) {
+    return falha(e);
+  }
+}
+
+// =====================================================================
+//  SLIDES DA PÁGINA INICIAL
+// =====================================================================
+
+export async function guardarSlide(formData: FormData): Promise<Resultado> {
+  try {
+    const eu = await exigirSeccao("conteudos", "editar");
+    const id = texto(formData.get("id"));
+    const caminho = z
+      .string()
+      .trim()
+      .refine((v) => v === "" || v.startsWith("/") || /^https:\/\//i.test(v), "As ligações têm de começar por / ou https://");
+
+    const valores = {
+      kicker: texto(formData.get("kicker")).slice(0, 120),
+      titleTop: z.string().min(2, "Escreva a primeira linha do título.").parse(texto(formData.get("titleTop"))),
+      titleBottom: texto(formData.get("titleBottom")).slice(0, 80),
+      text: texto(formData.get("text")).slice(0, 400),
+      primaryLabel: texto(formData.get("primaryLabel")).slice(0, 40),
+      primaryHref: caminho.parse(texto(formData.get("primaryHref"))),
+      secondaryLabel: texto(formData.get("secondaryLabel")).slice(0, 40),
+      secondaryHref: caminho.parse(texto(formData.get("secondaryHref"))),
+      position: inteiro(formData.get("position")),
+      active: marcado(formData.get("active")),
+      updatedAt: new Date(),
+    };
+
+    if (id) await db.update(homeSlides).set(valores).where(eq(homeSlides.id, id));
+    else await db.insert(homeSlides).values(valores);
+
+    await registarAlteracao({
+      actorId: eu.id,
+      area: "CONTEUDO",
+      acao: id ? "SLIDE_EDITAR" : "SLIDE_CRIAR",
+      mensagem: `Slide "${valores.titleTop}" ${id ? "editado" : "criado"} por ${eu.name}.`,
+    });
+    revalidatePath("/", "layout");
+    return { ok: true, mensagem: "Slide guardado." };
+  } catch (e) {
+    return falha(e);
+  }
+}
+
+export async function apagarSlide(id: string): Promise<Resultado> {
+  try {
+    const eu = await exigirSeccao("conteudos", "editar");
+    const [s] = await db.select().from(homeSlides).where(eq(homeSlides.id, id));
+    await db.delete(homeSlides).where(eq(homeSlides.id, id));
+    await registarAlteracao({
+      actorId: eu.id,
+      area: "CONTEUDO",
+      acao: "SLIDE_APAGAR",
+      mensagem: `Slide "${s?.titleTop ?? id}" apagado por ${eu.name}.`,
+    });
+    revalidatePath("/", "layout");
+    return { ok: true, mensagem: "Slide apagado." };
   } catch (e) {
     return falha(e);
   }

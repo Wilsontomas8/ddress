@@ -819,6 +819,32 @@ export const auditLogs = pgTable(
 );
 
 // --------------------------------------------------------------------
+//  SLIDES DA PÁGINA INICIAL — geridos no painel
+// --------------------------------------------------------------------
+
+/** Cada slide escreve por cima do vídeo de fundo da página inicial. */
+export const homeSlides = pgTable(
+  "home_slides",
+  {
+    id: id(),
+    /** Linha pequena por cima do título */
+    kicker: text("kicker").notNull().default(""),
+    /** Título em duas linhas: a segunda sai em itálico */
+    titleTop: text("title_top").notNull(),
+    titleBottom: text("title_bottom").notNull().default(""),
+    text: text("text").notNull().default(""),
+    primaryLabel: text("primary_label").notNull().default(""),
+    primaryHref: text("primary_href").notNull().default(""),
+    secondaryLabel: text("secondary_label").notNull().default(""),
+    secondaryHref: text("secondary_href").notNull().default(""),
+    position: integer("position").notNull().default(0),
+    active: boolean("active").notNull().default(true),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("home_slides_ordem_idx").on(t.active, t.position)]
+);
+
+// --------------------------------------------------------------------
 //  CONTAS: RECUPERAÇÃO DE PALAVRA-PASSE E TENTATIVAS DE ENTRADA
 // --------------------------------------------------------------------
 

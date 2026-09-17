@@ -16,6 +16,7 @@ import type { BaseDeDados } from "./index";
 import {
   appointments,
   categories,
+  homeSlides,
   collectionProducts,
   collections,
   mediaItems,
@@ -36,6 +37,7 @@ import {
   type Offer,
   type Section,
 } from "./schema";
+import { SLIDES_INICIO, VIDEO_INICIO } from "@/conteudo/slides-inicio";
 
 // ---------------------------------------------------------------- utils
 
@@ -536,7 +538,7 @@ export async function semear(
       products, categories, users, settings,
       notifications, service_request_products, service_requests, partners,
       product_suggestions, collection_products, collections, media_items,
-      page_highlights, pages, role_permissions, audit_logs,
+      page_highlights, pages, role_permissions, audit_logs, home_slides,
       password_resets, login_attempts, order_documents, uploads
     RESTART IDENTITY CASCADE
   `);
@@ -1347,6 +1349,40 @@ const SUGESTOES_DE_SAPATOS: Record<string, string[]> = {
 };
 
 async function semearConteudos(db: BaseDeDados, _varianteIds: Map<string, string>) {
+  // Página inicial: vídeo de fundo e slides
+  const paginaInicialId = uid();
+  await db.insert(pages).values({
+    id: paginaInicialId,
+    slug: "inicio",
+    title: "DDRESS — venda e aluguer de vestidos em Luanda",
+    subtitle: "Vista a peça certa",
+    body: "",
+  });
+  await db.insert(mediaItems).values({
+    id: uid(),
+    ownerType: "PAGINA",
+    ownerId: paginaInicialId,
+    kind: "VIDEO",
+    url: VIDEO_INICIO.src,
+    poster: VIDEO_INICIO.poster,
+    title: "Vídeo de fundo da página inicial",
+    position: 0,
+  });
+  await db.insert(homeSlides).values(
+    SLIDES_INICIO.map((slide, position) => ({
+      id: uid(),
+      kicker: slide.rotulo,
+      titleTop: slide.titulo[0] ?? "",
+      titleBottom: slide.titulo[1] ?? "",
+      text: slide.texto,
+      primaryLabel: slide.principal.texto,
+      primaryHref: slide.principal.href,
+      secondaryLabel: slide.secundaria?.texto ?? "",
+      secondaryHref: slide.secundaria?.href ?? "",
+      position,
+    }))
+  );
+
   // Quem somos
   const paginaId = uid();
   await db.insert(pages).values({

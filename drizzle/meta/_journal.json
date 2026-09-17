@@ -22,6 +22,13 @@
       "when": 1789676492471,
       "tag": "0002_localizacao_contas_ficheiros",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789679581175,
+      "tag": "0003_slides_da_pagina_inicial",
+      "breakpoints": true
     }
   ]
 }

@@ -15,7 +15,7 @@ import {
   type TipoDeSolicitacao,
 } from "@/lib/solicitacoes-rotulos";
 import { guardarNotaSolicitacao, mudarEstadoSolicitacao, reenviarAvisosSolicitacao, sugerirSapatos } from "@/app/admin/acoes-conteudos";
-import { ESTADO_AVISO, PUBLICO_AVISO } from "@/lib/avisos-rotulos";
+import { CANAL_AVISO, ESTADO_AVISO, PUBLICO_AVISO } from "@/lib/avisos-rotulos";
 import FormularioAccao from "@/components/admin/FormularioAccao";
 import BotaoAccao from "@/components/admin/BotaoAccao";
 
@@ -245,10 +245,11 @@ export default async function PaginaSolicitacao({ params }: { params: Promise<{ 
                   return (
                     <li key={a.id} className="border-b border-marfim-200 pb-2 last:border-0">
                       <span className="block text-xs text-tinta-50">
-                        {PUBLICO_AVISO[a.audience] ?? a.audience} · {a.channel === "EMAIL" ? `e-mail ${a.recipient ?? ""}` : "no site"}
+                        {PUBLICO_AVISO[a.audience] ?? a.audience} · {CANAL_AVISO[a.channel] ?? a.channel}
+                        {a.recipient ? ` ${a.recipient}` : ""}
                       </span>
                       <span className="block">{a.title}</span>
-                      {a.channel === "EMAIL" && <span className={`selo mt-1 ${e.cor}`}>{e.texto}</span>}
+                      {a.channel !== "SITE" && <span className={`selo mt-1 ${e.cor}`}>{e.texto}</span>}
                     </li>
                   );
                 })}

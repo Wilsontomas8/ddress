@@ -3,6 +3,7 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   categories,
+  homeSlides,
   collectionProducts,
   collections,
   mediaItems,
@@ -14,6 +15,7 @@ import {
   products,
 } from "@/db/schema";
 import { listarProdutos } from "./catalogo";
+import { SLIDES_INICIO, VIDEO_INICIO, type Slide, type VideoDeFundo } from "@/conteudo/slides-inicio";
 
 export async function mediaDe(ownerType: "PAGINA" | "COLECCAO", ownerId: string) {
   return db
@@ -128,4 +130,40 @@ export async function pecasParaEscolher({ soSapatos = false } = {}) {
     .innerJoin(categories, eq(products.categoryId, categories.id))
     .where(soSapatos ? eq(categories.slug, "sapatos") : undefined)
     .orderBy(asc(categories.name), asc(products.name));
+}
+
+/**
+ * Página inicial: vídeo de fundo e slides, geridos no painel.
+ *
+ * O vídeo é o primeiro item de media da página "inicio"; os slides vêm da
+ * tabela home_slides. Enquanto não houver nada guardado, ficam os textos
+ * que vieram com o site (src/conteudo/slides-inicio.ts).
+ */
+export async function paginaInicial(): Promise<{ video: VideoDeFundo; slides: Slide[] }> {
+  const [pagina] = await db.select().from(pages).where(eq(pages.slug, "inicio"));
+  const [media, linhas] = await Promise.all([
+    pagina ? mediaDe("PAGINA", pagina.id) : Promise.resolve([]),
+    db.select().from(homeSlides).where(eq(homeSlides.active, true)).orderBy(asc(homeSlides.position)),
+  ]);
+
+  const oVideo = media.find((m) => m.kind === "VIDEO");
+  const video: VideoDeFundo = oVideo
+    ? { src: oVideo.url, poster: oVideo.poster ?? VIDEO_INICIO.poster, vertical: true }
+    : VIDEO_INICIO;
+
+  const slides: Slide[] = linhas.map((s) => ({
+    id: s.id,
+    rotulo: s.kicker,
+    titulo: [s.titleTop, s.titleBottom].filter(Boolean),
+    texto: s.text,
+    principal: { href: s.primaryHref || "/loja", texto: s.primaryLabel || "Ver a colecção" },
+    secundaria: s.secondaryLabel && s.secondaryHref ? { href: s.secondaryHref, texto: s.secondaryLabel } : undefined,
+  }));
+
+  return { video, slides: slides.length ? slides : SLIDES_INICIO };
+}
+
+/** Todos os slides, inclusive os escondidos — para o painel */
+export async function todosOsSlides() {
+  return db.select().from(homeSlides).orderBy(asc(homeSlides.position));
 }

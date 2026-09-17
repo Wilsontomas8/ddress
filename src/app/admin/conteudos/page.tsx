@@ -37,11 +37,19 @@ export default async function PaginaConteudos() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl">Quem somos</h1>
-          <p className="mt-1 text-sm text-tinta-70">Texto, destaques, vídeos e fotografias da página da loja.</p>
+          <p className="mt-1 text-sm text-tinta-70">
+            Texto, destaques, vídeos e fotografias da página Quem somos. Os slides e o vídeo da página inicial estão em
+            “Página inicial”.
+          </p>
         </div>
-        <Link href="/quem-somos" target="_blank" className="text-sm text-ouro-escuro hover:underline">
-          Ver no site ↗
-        </Link>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link href="/admin/conteudos/inicio" className="btn btn-contorno">
+            Página inicial
+          </Link>
+          <Link href="/quem-somos" target="_blank" className="text-sm text-ouro-escuro hover:underline">
+            Ver no site ↗
+          </Link>
+        </div>
       </div>
 
       <div className="mt-8 space-y-8">

@@ -5,7 +5,7 @@ import { notifications } from "@/db/schema";
 import { exigirAcesso } from "@/lib/guarda";
 import { formatDateTime } from "@/lib/dates";
 import { emailConfigurado } from "@/lib/email";
-import { ESTADO_AVISO, PUBLICO_AVISO } from "@/lib/avisos-rotulos";
+import { CANAL_AVISO, ESTADO_AVISO, PUBLICO_AVISO } from "@/lib/avisos-rotulos";
 import { marcarNotificacaoLida, marcarTodasLidas } from "@/app/admin/acoes-conteudos";
 import BotaoAccao from "@/components/admin/BotaoAccao";
 
@@ -15,7 +15,7 @@ export const metadata = { title: "Notificações" };
 const VISTAS = [
   { valor: "", texto: "Da loja" },
   { valor: "por-ler", texto: "Por ler" },
-  { valor: "emails", texto: "E-mails enviados" },
+  { valor: "emails", texto: "E-mails e Telegram" },
 ];
 
 export default async function PaginaNotificacoes({ searchParams }: { searchParams: Promise<{ vista?: string }> }) {
@@ -23,7 +23,7 @@ export default async function PaginaNotificacoes({ searchParams }: { searchParam
   const { vista = "" } = await searchParams;
 
   let onde: SQL | undefined;
-  if (vista === "emails") onde = eq(notifications.channel, "EMAIL");
+  if (vista === "emails") onde = inArray(notifications.channel, ["EMAIL", "TELEGRAM"]);
   else if (vista === "por-ler") onde = and(eq(notifications.audience, "LOJA"), eq(notifications.channel, "SITE"), isNull(notifications.readAt));
   else onde = and(eq(notifications.channel, "SITE"), inArray(notifications.audience, ["LOJA"]));
 
@@ -67,7 +67,7 @@ export default async function PaginaNotificacoes({ searchParams }: { searchParam
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-tinta-50">
                     {formatDateTime(a.createdAt)} · {PUBLICO_AVISO[a.audience] ?? a.audience}
-                    {a.channel === "EMAIL" ? ` · e-mail para ${a.recipient ?? "—"}` : ""}
+                    {a.channel !== "SITE" ? ` · ${CANAL_AVISO[a.channel] ?? a.channel}${a.recipient ? ` para ${a.recipient}` : ""}` : ""}
                   </p>
                   <p className={porLer ? "font-medium" : ""}>
                     {a.link ? (
@@ -78,7 +78,7 @@ export default async function PaginaNotificacoes({ searchParams }: { searchParam
                       a.title
                     )}
                   </p>
-                  {a.channel === "EMAIL" && estado && <span className={`selo mt-1 ${estado.cor}`}>{estado.texto}</span>}
+                  {a.channel !== "SITE" && estado && <span className={`selo mt-1 ${estado.cor}`}>{estado.texto}</span>}
                   {a.error && a.status === "FALHADA" && <p className="mt-1 text-xs text-rubi">{a.error}</p>}
                 </div>
                 {porLer && (

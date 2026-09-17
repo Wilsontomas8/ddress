@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import CartaoProduto from "@/components/CartaoProduto";
 import HeroInicio from "@/components/HeroInicio";
-import { SLIDES_INICIO, VIDEO_INICIO } from "@/conteudo/slides-inicio";
 import { listarProdutos } from "@/lib/catalogo";
+import { paginaInicial } from "@/lib/conteudos";
 
 export const dynamic = "force-dynamic";
 
@@ -52,11 +52,11 @@ const PASSOS = [
 ];
 
 export default async function PaginaInicial() {
-  const destaques = await listarProdutos({ apenasDestaques: true, limite: 8 });
+  const [destaques, inicio] = await Promise.all([listarProdutos({ apenasDestaques: true, limite: 8 }), paginaInicial()]);
 
   return (
     <>
-      <HeroInicio slides={SLIDES_INICIO} video={VIDEO_INICIO} />
+      <HeroInicio slides={inicio.slides} video={inicio.video} />
 
       {/* ------------------------------------------------ garantias */}
       <section aria-label="O que a DDRESS garante" className="border-b border-marfim-200">
