@@ -26,7 +26,8 @@
     "vercel-build": "tsx src/db/implantar.ts && next build",
     "db:implantar": "tsx src/db/implantar.ts",
     "e2e:contas": "node scripts/e2e-contas.mjs",
-    "e2e:ficheiros": "node scripts/e2e-ficheiros.mjs"
+    "e2e:ficheiros": "node scripts/e2e-ficheiros.mjs",
+    "db:diagnostico": "tsx src/db/diagnostico.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

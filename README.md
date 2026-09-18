@@ -254,6 +254,10 @@ cada arranque a frio; pedidos criados podem desaparecer). Serve para aprovar a F
 7. Opcional: `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` para a equipa receber os pedidos no
    Telegram; `NEXT_PUBLIC_SITE_URL` com o endereço final.
 
+Se a implantação falhar a aplicar migrações, o registo do build diz por que endereço tentou
+e porquê. Para testar as mesmas ligações a partir do computador, ponha-as num `.env` e corra
+`npm run db:diagnostico`.
+
 **/api/saude** passa a mostrar também, em `servicos`, se o e-mail, os ficheiros e o Telegram
 estão configurados.
 
