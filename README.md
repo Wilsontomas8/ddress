@@ -141,7 +141,8 @@ O painel carrega fotografias, vídeos e PDF (limites: 8 MB imagem, 60 MB vídeo,
 12 MB documento). Com `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` definidos,
 os ficheiros vão para o Supabase Storage (bucket `ddress`, público); no
 computador ficam em `public/carregados`. A factura do CEGID anexa-se ao
-pedido em *Painel → Pedidos → (pedido) → Documentos* e a cliente vê-a na
+pedido em *Painel → Pedidos → (pedido) → Documentos*, no acto da finalização —
+a partir de “Pago” o painel avisa enquanto ela faltar — e a cliente vê-a na
 página do pedido dela. O relatório mensal tem versão em folha A4:
 *Painel → Relatórios → Imprimir / PDF*.
 
@@ -161,6 +162,16 @@ Vercel às 05:00) verifica quais dessas peças já voltaram e envia o aviso uma
 A newsletter do rodapé só aceita inscrições com autorização explícita; cada
 e-mail traz a ligação de saída (`/newsletter/sair/<código>`) e quem sai fica
 registado. A lista também está em *Painel → Clientes*.
+
+### Joyce, a assistente comercial
+
+Uma janela de conversa nas páginas da loja. A Joyce responde a partir do que a
+loja tem guardado — horário, morada, taxa de entrega, regras do aluguer,
+maquilhagem, sapatos, pagamentos — e **não inventa**: quando não sabe, diz que
+não sabe e encaminha para o WhatsApp da loja. Não usa nenhum serviço externo
+nem envia a conversa para lado nenhum; fica no separador de quem está a ver.
+Nome, primeira frase e ligar/desligar em *Painel → Definições*; as respostas
+vivem em `src/lib/joyce.ts`.
 
 ### Notificações
 
@@ -208,7 +219,8 @@ npm run capturas  # capturas a 390/768/1360 px com verificação de transbordo
 
 Os percursos e as capturas precisam do site a correr (`npx next dev -p 3100`) e usam o
 Chromium do Playwright, ou o Edge/Chrome instalados. Última execução: perfis 13/13,
-cliente 10/10, painel 15/15, conteúdos 19/19, contas 12/12, ficheiros 9/9 — 78 verificações.
+cliente 10/10, painel 15/15, conteúdos 19/19, contas 15/15, ficheiros 9/9 — 81 verificações,
+com 60 testes unitários.
 A suite conta com a base acabada de semear (`npm run db:reset`): os passos que dependem de
 dados já gastos ficam marcados como “salta”, em vez de falharem.
 

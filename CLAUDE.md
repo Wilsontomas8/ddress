@@ -73,6 +73,12 @@ Carregamentos passam por `src/lib/armazenamento.ts` (Supabase Storage quando há
 `SEM_CONFIGURACAO` e nada falha. Nunca gravar ficheiros directamente em `public/` a partir
 de código que corra na Vercel.
 
+## Assistente comercial (Joyce)
+
+Respostas por regras em `src/lib/joyce.ts`, puras e testadas — **sem modelos de linguagem
+nem serviços externos**. Não inventar respostas: assunto que não esteja na lista encaminha
+para o WhatsApp da loja. Dados vêm sempre das definições, nunca escritos à mão no texto.
+
 ## Contactos da loja
 
 E-mail: `atendimentoddress@gmail.com` · Instagram: `@ddress_aluguer_de_vestidos`.

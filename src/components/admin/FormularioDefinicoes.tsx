@@ -28,6 +28,9 @@ type Props = {
     minNoticeHours: number;
     bookingHorizonDays: number;
     reservationExpiryHours: number;
+    assistantEnabled: boolean;
+    assistantName: string;
+    assistantGreeting: string;
     closedDates: string[];
   };
 };
@@ -230,6 +233,28 @@ export default function FormularioDefinicoes({ loja }: Props) {
             Um por linha ou separados por vírgula, no formato ano-mês-dia.
           </span>
         </label>
+      </section>
+
+      {/* --------------------------------------- assistente comercial */}
+      <section className="cartao p-5">
+        <h2 className="font-display text-lg">Assistente comercial do site</h2>
+        <p className="mt-1 text-sm text-tinta-70">
+          A janela de conversa que aparece nas páginas da loja. Responde a partir destas definições (morada, horário,
+          entrega, contactos) e, quando não sabe, passa a conversa para o WhatsApp da loja.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="flex items-center gap-2 self-end pb-3 text-sm sm:col-span-2">
+            <input type="checkbox" name="assistantEnabled" defaultChecked={loja.assistantEnabled} /> Mostrar a assistente no site
+          </label>
+          <label>
+            <span className="etiqueta">Nome</span>
+            <input className="campo" name="assistantName" defaultValue={loja.assistantName} maxLength={40} />
+          </label>
+          <label className="sm:col-span-2">
+            <span className="etiqueta">Primeira frase</span>
+            <textarea className="campo min-h-20" name="assistantGreeting" defaultValue={loja.assistantGreeting} maxLength={300} />
+          </label>
+        </div>
       </section>
 
       {aviso && (

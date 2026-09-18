@@ -27,7 +27,12 @@ type Props = {
   porValidar: { id: string; amount: number; reference: string | null }[];
   souEu: boolean;
   jaPago: number;
+  /** Já há factura do CEGID anexada a este pedido? */
+  temFactura: boolean;
 };
+
+/** Estados a partir dos quais a factura do CEGID já devia estar anexada */
+const ESTADOS_COM_FACTURA: OrderStatus[] = ["PAGO", "PRONTO", "ENTREGUE", "EM_ALUGUER", "DEVOLVIDO", "CONCLUIDO"];
 
 export default function AccoesPedido({
   pedido,
@@ -35,6 +40,7 @@ export default function AccoesPedido({
   porValidar,
   souEu,
   jaPago,
+  temFactura,
 }: Props) {
   const [aProcessar, iniciar] = useTransition();
   const [aviso, setAviso] = useState<{ tipo: "ok" | "erro"; texto: string } | null>(null);
@@ -53,9 +59,18 @@ export default function AccoesPedido({
   }
 
   const emFalta = Math.max(0, pedido.total - jaPago);
+  const faltaFactura = !temFactura && ESTADOS_COM_FACTURA.includes(pedido.status);
 
   return (
     <div className="space-y-6">
+      {faltaFactura && (
+        <p className="border-l-2 border-ouro bg-marfim-100 px-3 py-2 text-sm">
+          Falta anexar a <strong>factura do CEGID</strong> a este pedido.{" "}
+          <a href="#documentos" className="text-ouro-escuro underline underline-offset-4">
+            Anexar agora
+          </a>
+        </p>
+      )}
       {aviso && (
         <p
           className={`border-l-2 px-3 py-2 text-sm ${

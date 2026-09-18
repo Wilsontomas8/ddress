@@ -42,6 +42,9 @@ export default async function PaginaDefinicoes() {
             slotCapacity: loja.slotCapacity,
             minNoticeHours: loja.minNoticeHours,
             reservationExpiryHours: loja.reservationExpiryHours,
+            assistantEnabled: loja.assistantEnabled,
+            assistantName: loja.assistantName,
+            assistantGreeting: loja.assistantGreeting,
             bookingHorizonDays: loja.bookingHorizonDays,
             closedDates: loja.closedDates,
           }}

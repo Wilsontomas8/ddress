@@ -541,6 +541,11 @@ export const settings = pgTable("settings", {
   /** Feriados e dias fechados, "YYYY-MM-DD" */
   closedDates: text("closed_dates").array().notNull().default([]),
 
+  // --- assistente comercial do site ---
+  assistantEnabled: boolean("assistant_enabled").notNull().default(true),
+  assistantName: text("assistant_name").notNull().default("Joyce"),
+  assistantGreeting: text("assistant_greeting").notNull().default("Bem-vindo(a) à DDRESS, sou a Joyce, assistente comercial. Em que posso ajudar?"),
+
   /**
    * Uma reserva de aluguer que exige prova expira se, faltando estas horas
    * para o levantamento, ainda não tiver nenhuma prova registada.

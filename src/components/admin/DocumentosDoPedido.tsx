@@ -29,17 +29,25 @@ export default function DocumentosDoPedido({
   orderId,
   documentos,
   podeEditar,
+  faltaFactura = false,
 }: {
   orderId: string;
   documentos: DocumentoDoPedido[];
   podeEditar: boolean;
+  /** O pedido já devia ter factura e ainda não tem */
+  faltaFactura?: boolean;
 }) {
   return (
-    <section className="cartao p-5">
+    <section id="documentos" className={`cartao scroll-mt-24 p-5 ${faltaFactura ? "border-l-2 border-l-ouro" : ""}`}>
       <h2 className="font-display text-lg">Documentos</h2>
       <p className="mt-1 text-sm text-tinta-70">
         Factura do CEGID, comprovativos e outros papéis. A cliente vê-os na página do pedido dela.
       </p>
+      {faltaFactura && (
+        <p className="mt-3 text-sm text-ouro-escuro">
+          Este pedido já está a ser finalizado: anexe a factura do CEGID com o número, para a cliente a poder guardar.
+        </p>
+      )}
 
       {documentos.length === 0 ? (
         <p className="mt-4 text-sm text-tinta-50">Ainda sem documentos.</p>

@@ -798,6 +798,11 @@ export async function guardarDefinicoes(formData: FormData): Promise<Resultado> 
       minNoticeHours: Math.max(0, numero(formData.get("minNoticeHours"))),
       bookingHorizonDays: Math.max(7, numero(formData.get("bookingHorizonDays")) || 45),
       reservationExpiryHours: Math.min(168, Math.max(1, numero(formData.get("reservationExpiryHours")) || 24)),
+      assistantEnabled: formData.get("assistantEnabled") === "on",
+      assistantName: texto(formData.get("assistantName")) || "Joyce",
+      assistantGreeting:
+        texto(formData.get("assistantGreeting")) ||
+        "Bem-vindo(a) à DDRESS, sou a Joyce, assistente comercial. Em que posso ajudar?",
       closedDates: feriados,
       updatedAt: new Date(),
     })

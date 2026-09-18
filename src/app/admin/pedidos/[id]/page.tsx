@@ -85,6 +85,10 @@ export default async function PaginaPedidoAdmin({
       .orderBy(desc(orderDocuments.createdAt)),
   ]);
 
+  const temFactura = documentos.some((d) => d.doc.kind === "FACTURA");
+  const faltaFactura =
+    !temFactura && ["PAGO", "PRONTO", "ENTREGUE", "EM_ALUGUER", "DEVOLVIDO", "CONCLUIDO"].includes(pedido.status);
+
   const estado = ESTADO_PEDIDO[pedido.status];
   const estadoPagamento = ESTADO_PAGAMENTO[pedido.paymentStatus];
   // Peças que já saíram e precisam (ou precisaram) de higienização
@@ -360,6 +364,7 @@ export default async function PaginaPedidoAdmin({
           <DocumentosDoPedido
             orderId={pedido.id}
             podeEditar={acesso.podeEditar}
+            faltaFactura={faltaFactura}
             documentos={documentos.map((d) => ({
               id: d.doc.id,
               kind: d.doc.kind,
@@ -409,6 +414,7 @@ export default async function PaginaPedidoAdmin({
               .map((p) => ({ id: p.id, amount: p.amount, reference: p.reference }))}
             souEu={pedido.assignedToId === eu?.id}
             jaPago={jaPago}
+            temFactura={temFactura}
           />
         </div>
       </div>

@@ -36,6 +36,13 @@
       "when": 1789681553604,
       "tag": "0004_avisos_disponibilidade_newsletter",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789690083682,
+      "tag": "0005_assistente_comercial",
+      "breakpoints": true
     }
   ]
 }

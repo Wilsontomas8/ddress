@@ -136,6 +136,29 @@ try {
   await balcao.close();
   await contexto.close();
 
+  // ------------------------------------------------ a Joyce responde
+  const visita = await navegador.newContext({ viewport: { width: 1280, height: 900 } });
+  const loja = await visita.newPage();
+  loja.setDefaultTimeout(60000);
+  loja.setDefaultNavigationTimeout(120000);
+  await loja.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
+  await hidratado(loja, "header");
+  await loja.getByRole("button", { name: /Falar com a/ }).click();
+  const conversa = loja.getByRole("dialog", { name: /assistente comercial/ });
+  await conversa.waitFor();
+  passo("A assistente cumprimenta quem chega", await conversa.getByText("assistente comercial", { exact: false }).first().isVisible());
+
+  await conversa.getByRole("button", { name: "Fazem entregas?" }).click();
+  await conversa.getByText("Entregamos em Luanda", { exact: false }).waitFor({ timeout: 30000 });
+  passo("Responde sobre entregas com a taxa da loja", true);
+
+  await conversa.getByLabel("Escreva a sua pergunta").fill("aceitam criptomoeda?");
+  await conversa.getByRole("button", { name: "Enviar" }).click();
+  await conversa.getByText("prefiro não inventar", { exact: false }).waitFor({ timeout: 30000 });
+  passo("Quando não sabe, encaminha para uma pessoa", true);
+  await loja.screenshot({ path: `${TIROS}/contas-joyce.png` });
+  await visita.close();
+
   // ------------------------------------------------ telemóvel
   const movel = await navegador.newContext({
     viewport: { width: 390, height: 844 },
