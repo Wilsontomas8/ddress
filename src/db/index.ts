@@ -39,7 +39,53 @@ export function urlDaBase(): string | undefined {
 
 /** Para migrações convém a ligação directa, sem pooler, quando existe. */
 export function urlDeMigracao(): string | undefined {
-  return process.env.DATABASE_URL_DIRECT || process.env.POSTGRES_URL_NON_POOLING || urlDaBase();
+  return urlsDeMigracao()[0];
+}
+
+/** Esconde a palavra-passe: serve para dizer nos registos onde se ligou. */
+export function enderecoLegivel(url: string): string {
+  try {
+    const e = new URL(url);
+    return `${e.hostname}:${e.port || "5432"}`;
+  } catch {
+    return "endereço inválido";
+  }
+}
+
+/**
+ * Endereços a tentar para migrar, por ordem de preferência.
+ *
+ * A ligação directa do Supabase (db.<ref>.supabase.co) só responde por
+ * IPv6 e a Vercel não fala IPv6: por isso, quando só temos o pooler em
+ * modo transacção (porta 6543), tentamos também o mesmo pooler em modo
+ * sessão (porta 5432), que é o que as migrações precisam.
+ */
+export function urlsDeMigracao(): string[] {
+  const candidatas = [
+    process.env.DATABASE_URL_DIRECT,
+    process.env.POSTGRES_URL_NON_POOLING,
+    process.env.DATABASE_URL,
+    process.env.POSTGRES_URL,
+  ].filter((u): u is string => !!u && !u.startsWith("pglite:"));
+
+  const lista: string[] = [];
+  const juntar = (url: string) => {
+    if (!lista.includes(url)) lista.push(url);
+  };
+
+  for (const url of candidatas) {
+    juntar(url);
+    try {
+      const e = new URL(url);
+      if (e.hostname.includes("pooler.supabase.com") && e.port === "6543") {
+        e.port = "5432";
+        juntar(e.toString());
+      }
+    } catch {
+      // endereço estranho: fica como está e falha com mensagem clara
+    }
+  }
+  return lista;
 }
 
 export function ehBaseEmbutida(url = urlDaBase()): boolean {
@@ -57,10 +103,13 @@ export function criarPool(url: string, max = 10): Pool {
   const endereco = new URL(url);
   endereco.searchParams.delete("sslmode");
   endereco.searchParams.delete("supa");
+  endereco.searchParams.delete("pgbouncer");
   return new Pool({
     connectionString: endereco.toString(),
     ssl: local ? false : { rejectUnauthorized: false },
     max,
+    // Falhar depressa e com mensagem, em vez de o build ficar pendurado
+    connectionTimeoutMillis: 20_000,
   });
 }
 
