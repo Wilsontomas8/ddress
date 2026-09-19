@@ -15,8 +15,10 @@ export function avisosDaLigacao(url: string | undefined): string[] {
   const utilizador = decodeURIComponent(e.username);
   const senha = e.password;
 
-  if (/YOUR-PASSWORD|\[|\]/i.test(url)) {
-    avisos.push("A ligação ainda tem o marcador [YOUR-PASSWORD]: substitua-o pela palavra-passe da base (sem os parênteses rectos).");
+  if (/YOUR-PASSWORD/i.test(url)) {
+    avisos.push("A ligação ainda tem o texto YOUR-PASSWORD: substitua [YOUR-PASSWORD] inteiro pela palavra-passe da base.");
+  } else if (/[[\]]|%5B|%5D/i.test(url)) {
+    avisos.push("A palavra-passe foi colada mas ficaram os parênteses rectos [ ] à volta dela: apague-os.");
   }
   if (!senha) avisos.push("A ligação não tem palavra-passe.");
   if (e.hostname.includes("pooler.supabase.com") && !/^postgres\.[a-z0-9]{15,}$/.test(utilizador)) {
