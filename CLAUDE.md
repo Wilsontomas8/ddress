@@ -45,6 +45,8 @@ Não correr `next build` com o servidor de desenvolvimento ligado na mesma pasta
    (`exigirSeccao(área, "editar")`); esconder um botão não é controlo. Área nova = entrada em
    `RECURSOS` + padrão por perfil + ícone em `PainelShell`.
 4. **Mudança de schema = migração** (`npm run db:generate`), nunca `db:push` em produção.
+   Tabela nova no Supabase = `ALTER TABLE … ENABLE ROW LEVEL SECURITY` na mesma migração
+   (a 0006 ligou-o em todas as existentes; sem RLS a API REST do Supabase expõe a tabela).
 5. **Dados de demonstração só fictícios.** Numa base real a semente corre em modo `publica`
    (contas de demonstração sem acesso).
 6. **Nada dado como concluído sem prova**: `tsc`, `npm test` e, em mudanças de interface ou

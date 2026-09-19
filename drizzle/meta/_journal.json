@@ -43,6 +43,13 @@
       "when": 1789690083682,
       "tag": "0005_assistente_comercial",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789827969013,
+      "tag": "0006_seguranca_rls",
+      "breakpoints": true
     }
   ]
 }
