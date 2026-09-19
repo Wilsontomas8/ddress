@@ -40,6 +40,35 @@ const bucket = () => process.env.SUPABASE_BUCKET || "ddress";
 const enderecoSupabase = () => (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\/$/, "");
 const chaveSupabase = () => process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
+/** O gateway do Supabase pede a chave nos dois cabeçalhos */
+function cabecalhosSupabase(): Record<string, string> {
+  return { Authorization: `Bearer ${chaveSupabase()}`, apikey: chaveSupabase() };
+}
+
+async function bucketEmFalta(resposta: Response): Promise<boolean> {
+  if (resposta.status !== 400 && resposta.status !== 404) return false;
+  const texto = (await resposta.text().catch(() => "")).toLowerCase();
+  return texto.includes("bucket not found") || texto.includes("not_found");
+}
+
+/** Cria o bucket público onde ficam os ficheiros do site */
+async function criarBucket(): Promise<boolean> {
+  const resposta = await fetch(`${enderecoSupabase()}/storage/v1/bucket`, {
+    method: "POST",
+    headers: { ...cabecalhosSupabase(), "Content-Type": "application/json" },
+    body: JSON.stringify({ id: bucket(), name: bucket(), public: true }),
+  });
+  if (resposta.ok) {
+    console.log(`[DDRESS] Bucket "${bucket()}" criado no Supabase Storage.`);
+    return true;
+  }
+  const detalhe = await resposta.text().catch(() => "");
+  // Criado entretanto por outro pedido: também serve
+  if (detalhe.toLowerCase().includes("already exists")) return true;
+  console.error("Supabase Storage (criar bucket):", resposta.status, detalhe.slice(0, 300));
+  return false;
+}
+
 export function armazenamentoConfigurado(): boolean {
   return !!(enderecoSupabase() && chaveSupabase());
 }
@@ -87,16 +116,23 @@ export async function guardarFicheiro(opts: {
 
   let url: string;
   if (armazenamentoConfigurado()) {
-    const resposta = await fetch(`${enderecoSupabase()}/storage/v1/object/${bucket()}/${caminho}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${chaveSupabase()}`,
-        "Content-Type": ficheiro.type,
-        "x-upsert": "true",
-        "cache-control": "31536000",
-      },
-      body: new Uint8Array(dados),
-    });
+    const enviar = () =>
+      fetch(`${enderecoSupabase()}/storage/v1/object/${bucket()}/${caminho}`, {
+        method: "POST",
+        headers: {
+          ...cabecalhosSupabase(),
+          "Content-Type": ficheiro.type,
+          "x-upsert": "true",
+          "cache-control": "31536000",
+        },
+        body: new Uint8Array(dados),
+      });
+
+    let resposta = await enviar();
+    // Primeiro carregamento: o bucket ainda não existe — cria-se e tenta-se outra vez.
+    if (!resposta.ok && (await bucketEmFalta(resposta.clone()))) {
+      if (await criarBucket()) resposta = await enviar();
+    }
     if (!resposta.ok) {
       const detalhe = await resposta.text().catch(() => "");
       console.error("Supabase Storage:", resposta.status, detalhe.slice(0, 300));

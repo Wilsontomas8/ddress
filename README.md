@@ -249,8 +249,8 @@ cada arranque a frio; pedidos criados podem desaparecer). Serve para aprovar a F
    O endpoint só indica que variáveis existem; nunca mostra valores.
 5. E-mails: defina `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` (palavra-passe de aplicação do Gmail
    atendimentoddress@gmail.com) ou `RESEND_API_KEY`.
-6. Ficheiros: em Supabase → **Storage**, criar o bucket **ddress** (público) e definir na
-   Vercel `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`.
+6. Ficheiros: definir na Vercel `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`; o bucket **ddress**
+   (público) é criado sozinho no primeiro carregamento.
 7. Opcional: `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` para a equipa receber os pedidos no
    Telegram; `NEXT_PUBLIC_SITE_URL` com o endereço final.
 
@@ -273,8 +273,8 @@ da DDRESS, não de programação:
 **A DDRESS precisa de fazer** (tudo na Vercel, cinco minutos):
 
 1. Ligar o Supabase (secção 5) e definir `DDRESS_SENHA_ADMIN`.
-2. Criar o bucket **ddress** no Supabase Storage e definir `SUPABASE_URL` e
-   `SUPABASE_SERVICE_ROLE_KEY`.
+2. Definir `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` (o bucket **ddress** é criado sozinho
+   no primeiro carregamento).
 3. Definir as credenciais de e-mail (`SMTP_*` do Gmail da loja ou `RESEND_API_KEY`).
 4. Opcional: `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID`.
 5. Antes de abrir ao público: limpar os dados de demonstração e tornar o repositório privado.
