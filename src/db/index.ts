@@ -30,11 +30,12 @@ type Ligacao = {
 const PASTA_EMBUTIDA_PADRAO = process.env.VERCEL ? "/tmp/ddress-pglite" : ".dados/pglite";
 
 /**
- * Endereço da base de dados. Aceita DATABASE_URL e, na Vercel com a
- * integração do Supabase, POSTGRES_URL (ligação pelo pooler).
+ * Endereço da base de dados. A integração Vercel ↔ Supabase cria
+ * POSTGRES_URL já com a palavra-passe certa, por isso ganha a uma
+ * DATABASE_URL escrita à mão; esta serve fora da Vercel.
  */
 export function urlDaBase(): string | undefined {
-  return process.env.DATABASE_URL || process.env.POSTGRES_URL || undefined;
+  return process.env.POSTGRES_URL || process.env.DATABASE_URL || undefined;
 }
 
 /** Para migrações convém a ligação directa, sem pooler, quando existe. */
@@ -62,10 +63,10 @@ export function enderecoLegivel(url: string): string {
  */
 export function urlsDeMigracao(): string[] {
   const candidatas = [
-    process.env.DATABASE_URL_DIRECT,
     process.env.POSTGRES_URL_NON_POOLING,
-    process.env.DATABASE_URL,
     process.env.POSTGRES_URL,
+    process.env.DATABASE_URL_DIRECT,
+    process.env.DATABASE_URL,
   ].filter((u): u is string => !!u && !u.startsWith("pglite:"));
 
   const lista: string[] = [];

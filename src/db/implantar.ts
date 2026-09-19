@@ -11,6 +11,7 @@
  */
 
 import "dotenv/config";
+import { randomBytes } from "node:crypto";
 import path from "node:path";
 import bcrypt from "bcryptjs";
 import { eq, sql } from "drizzle-orm";
@@ -99,7 +100,14 @@ async function main() {
     }
     console.log(`[implantar] Conta de administrador pronta: ${EMAIL_ADMINISTRADOR}.`);
   } else {
-    console.log("[implantar] DDRESS_SENHA_ADMIN não definida: a conta de administrador não foi alterada.");
+    // Sem palavra-passe definida, a conta existe com uma palavra-passe
+    // aleatória: a DDRESS activa-a em /recuperar, pelo e-mail da loja.
+    const [existente] = await db.select({ id: users.id }).from(users).where(eq(users.email, EMAIL_ADMINISTRADOR));
+    if (!existente) {
+      const aleatoria = bcrypt.hashSync(randomBytes(24).toString("hex"), 10);
+      await db.insert(users).values({ name: "Administrador DDRESS", email: EMAIL_ADMINISTRADOR, passwordHash: aleatoria, role: "ADMIN" });
+    }
+    console.log(`[implantar] Conta ${EMAIL_ADMINISTRADOR} pronta: defina a palavra-passe em /recuperar (chega por e-mail).`);
   }
 }
 
