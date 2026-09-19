@@ -105,7 +105,12 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error("[implantar] Falhou:", e);
-    process.exitCode = 1;
+    // Não deita a publicação abaixo: o site arranca, confirma a base e, se
+    // ela não servir, usa a de demonstração e diz porquê em /api/saude.
+    console.error("[implantar] ==============================================");
+    console.error("[implantar] A base de dados configurada NÃO ficou pronta:");
+    console.error("[implantar]", e instanceof Error ? e.message : e);
+    console.error("[implantar] A publicação continua; veja /api/saude depois.");
+    console.error("[implantar] ==============================================");
   })
   .finally(() => fecharBaseDeDados());

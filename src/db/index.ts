@@ -133,7 +133,7 @@ function criarLigacao(): Ligacao {
 
 // Uma única ligação por processo: o Next.js carrega este módulo em várias
 // camadas (instrumentação, rotas, acções) e todas têm de partilhar a mesma.
-const global = globalThis as unknown as { __ddressLigacao?: Ligacao };
+const global = globalThis as unknown as { __ddressLigacao?: Ligacao; __ddressMotivoDaFalha?: string | null };
 global.__ddressLigacao ??= criarLigacao();
 
 const actual = () => global.__ddressLigacao!;
@@ -152,6 +152,36 @@ export const db = new Proxy({} as BaseDeDados, {
 
 export const baseEmbutida = actual().embutida;
 export const fecharBaseDeDados = () => actual().fechar();
+
+/** A ligação em uso neste momento é a embutida? (muda com o recurso abaixo) */
+export const ligacaoEmbutida = () => actual().embutida;
+
+/**
+ * Porque é que a base configurada não está a ser usada. Fica visível em
+ * /api/saude para se perceber o que falta corrigir na Vercel.
+ */
+export const motivoDaFalhaDaBase = (): string | null => global.__ddressMotivoDaFalha ?? null;
+
+/**
+ * A base configurada não responde (ou não tem as tabelas): a loja passa a
+ * correr sobre a base embutida de demonstração, em vez de dar erro em
+ * todas as páginas. O motivo fica registado e visível em /api/saude.
+ */
+export async function recorrerABaseEmbutida(motivo: string): Promise<void> {
+  const ligacao = actual();
+  if (ligacao.embutida) {
+    global.__ddressMotivoDaFalha = motivo;
+    return;
+  }
+  await ligacao.fechar().catch(() => {});
+  const pasta = path.resolve(PASTA_EMBUTIDA_PADRAO);
+  mkdirSync(path.dirname(pasta), { recursive: true });
+  const cliente = new PGlite(pasta);
+  const db = drizzlePglite(cliente, { schema }) as unknown as BaseDeDados;
+  global.__ddressLigacao = { db, embutida: true, pasta, fechar: () => cliente.close() };
+  global.__ddressMotivoDaFalha = motivo;
+  console.error(`[DDRESS] Base de dados configurada indisponível: ${motivo}. A loja está a usar a base de demonstração.`);
+}
 
 /**
  * Só para a base embutida de demonstração: põe a pasta actual de parte

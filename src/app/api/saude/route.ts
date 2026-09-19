@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
-import { db, ehBaseEmbutida } from "@/db";
+import { db, ehBaseEmbutida, ligacaoEmbutida, motivoDaFalhaDaBase } from "@/db";
+import { prepararBaseDeDados } from "@/db/preparar";
 import { armazenamentoConfigurado, ondeGuardamos } from "@/lib/armazenamento";
 import { emailConfigurado } from "@/lib/email";
 import { telegramConfigurado } from "@/lib/telegram";
@@ -13,6 +14,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   const existe = (n: string) => !!process.env[n];
+  await prepararBaseDeDados();
+  const configurada = !ehBaseEmbutida();
+  const motivo = motivoDaFalhaDaBase();
   let base: { responde: boolean; pedidos?: number; erro?: string };
   try {
     const { rows } = await db.execute(sql`SELECT COUNT(*)::int AS n FROM orders`);
@@ -22,7 +26,8 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    modo: ehBaseEmbutida() ? "base-embutida-demonstracao" : "postgresql",
+    modo: !ligacaoEmbutida() ? "postgresql" : configurada ? "base-embutida-por-falha" : "base-embutida-demonstracao",
+    ...(motivo ? { falhaDaBaseConfigurada: motivo } : {}),
     variaveis: {
       DATABASE_URL: existe("DATABASE_URL"),
       POSTGRES_URL: existe("POSTGRES_URL"),
