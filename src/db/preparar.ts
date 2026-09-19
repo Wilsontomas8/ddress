@@ -60,16 +60,41 @@ async function migrarESemear() {
   }
 }
 
+/** Falhas de rede que passam sozinhas: vale a pena tentar outra vez */
+function ehPassageira(erro: unknown): boolean {
+  return /timeout|terminated|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up/i.test(causa(erro));
+}
+
+async function comRepeticao<T>(consulta: () => Promise<T>, tentativas = 4): Promise<T> {
+  let ultimo: unknown;
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      return await consulta();
+    } catch (erro) {
+      ultimo = erro;
+      if (!ehPassageira(erro)) throw erro;
+      await new Promise((r) => setTimeout(r, 750 * (i + 1)));
+    }
+  }
+  throw ultimo;
+}
+
 /**
  * Com base real, confirma no arranque que ela responde e tem as tabelas.
- * Se não responder — endereço errado, rede fechada, migrações por aplicar —
- * a loja passa para a base de demonstração em vez de dar erro em todas as
- * páginas, e /api/saude diz o que se passa.
+ *
+ * Só passa para a base de demonstração quando a base está mesmo mal
+ * configurada (palavra-passe recusada, endereço inexistente, tabelas por
+ * criar). Uma falha de rede momentânea NÃO troca de base: senão uma
+ * encomenda verdadeira podia ir parar a dados de demonstração e perder-se.
  */
 async function confirmarBaseReal(): Promise<void> {
   try {
-    await db.execute(sql`SELECT 1`);
+    await comRepeticao(() => db.execute(sql`SELECT 1`));
   } catch (erro) {
+    if (ehPassageira(erro)) {
+      console.warn(`[DDRESS] A base demorou a responder no arranque (${causa(erro)}); continua a ser usada.`);
+      return;
+    }
     await recorrerABaseEmbutida(
       `não responde (${causa(erro)}). ` +
         `Endereços de migração: ${await sondarEnderecosDeMigracao()}`
@@ -78,8 +103,9 @@ async function confirmarBaseReal(): Promise<void> {
   }
 
   try {
-    await db.execute(sql`SELECT 1 FROM settings LIMIT 1`);
-  } catch {
+    await comRepeticao(() => db.execute(sql`SELECT 1 FROM settings LIMIT 1`));
+  } catch (erro) {
+    if (ehPassageira(erro)) return;
     await recorrerABaseEmbutida(
       "responde, mas as tabelas ainda não existem (as migrações não foram aplicadas). " +
         `Endereços de migração: ${await sondarEnderecosDeMigracao()}`
