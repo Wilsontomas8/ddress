@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
-import { db, ehBaseEmbutida, ligacaoEmbutida, motivoDaFalhaDaBase } from "@/db";
+import { db, ehBaseEmbutida, ligacaoEmbutida, motivoDaFalhaDaBase, urlDaBase } from "@/db";
+import { avisosDaLigacao } from "@/lib/diagnostico-ligacao";
+import { verificarEmail } from "@/lib/email";
+import { getSessao } from "@/lib/auth";
+import { ehPerfilDeEquipa } from "@/lib/permissoes";
 import { prepararBaseDeDados } from "@/db/preparar";
 import { armazenamentoConfigurado, ondeGuardamos } from "@/lib/armazenamento";
 import { emailConfigurado } from "@/lib/email";
@@ -12,7 +16,7 @@ export const dynamic = "force-dynamic";
  * Diagnóstico da implantação. Só diz QUE variáveis existem e se a base
  * responde — nunca mostra valores.
  */
-export async function GET() {
+export async function GET(request: Request) {
   const existe = (n: string) => !!process.env[n];
   await prepararBaseDeDados();
   const configurada = !ehBaseEmbutida();
@@ -25,9 +29,17 @@ export async function GET() {
     base = { responde: false, erro: e instanceof Error ? e.message.split("\n")[0].slice(0, 120) : "erro" };
   }
 
+  // ?verificar=email faz o login SMTP (sem enviar nada); só para a equipa,
+  // para ninguém de fora poder bater à porta do Gmail repetidamente.
+  const querVerificar = new URL(request.url).searchParams.get("verificar") === "email";
+  const sessao = querVerificar ? await getSessao() : null;
+  const verificacaoEmail =
+    querVerificar && sessao && ehPerfilDeEquipa(sessao.role) ? await verificarEmail() : undefined;
+
   return NextResponse.json({
+    ...(verificacaoEmail ? { verificacaoEmail } : {}),
     modo: !ligacaoEmbutida() ? "postgresql" : configurada ? "base-embutida-por-falha" : "base-embutida-demonstracao",
-    ...(motivo ? { falhaDaBaseConfigurada: motivo } : {}),
+    ...(motivo ? { falhaDaBaseConfigurada: motivo, avisosDaLigacao: avisosDaLigacao(urlDaBase()) } : {}),
     variaveis: {
       DATABASE_URL: existe("DATABASE_URL"),
       POSTGRES_URL: existe("POSTGRES_URL"),

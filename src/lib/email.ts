@@ -69,3 +69,26 @@ export async function enviarEmail(opts: {
     return { ok: false, semConfiguracao: false, erro: e instanceof Error ? e.message.slice(0, 200) : "Falha no envio." };
   }
 }
+
+/**
+ * Confirma que o servidor de e-mail aceita as credenciais, sem enviar
+ * mensagem nenhuma (o SMTP só faz o login e sai).
+ */
+export async function verificarEmail(): Promise<{ ok: boolean; detalhe: string }> {
+  if (process.env.RESEND_API_KEY) return { ok: true, detalhe: "Resend configurado (não verificável sem enviar)." };
+  if (!emailConfigurado()) return { ok: false, detalhe: "SMTP por configurar." };
+  try {
+    const porta = Number(process.env.SMTP_PORT || 465);
+    const transporte = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: porta,
+      secure: porta === 465,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      connectionTimeout: 15_000,
+    });
+    await transporte.verify();
+    return { ok: true, detalhe: `O servidor ${process.env.SMTP_HOST}:${porta} aceitou o login de ${process.env.SMTP_USER}.` };
+  } catch (e) {
+    return { ok: false, detalhe: e instanceof Error ? e.message.split("\n")[0].slice(0, 200) : "Falha no login SMTP." };
+  }
+}
