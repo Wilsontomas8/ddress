@@ -65,9 +65,9 @@ export default function AccoesPedido({
     <div className="space-y-6">
       {faltaFactura && (
         <p className="border-l-2 border-ouro bg-marfim-100 px-3 py-2 text-sm">
-          Falta anexar a <strong>factura do CEGID</strong> a este pedido.{" "}
+          Falta registar o número da <strong>factura do CEGID</strong>.{" "}
           <a href="#documentos" className="text-ouro-escuro underline underline-offset-4">
-            Anexar agora
+            Registar agora
           </a>
         </p>
       )}

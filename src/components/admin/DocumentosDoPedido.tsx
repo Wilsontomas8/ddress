@@ -2,7 +2,6 @@ import { FileText, Trash2 } from "lucide-react";
 import { apagarDocumentoDoPedido, guardarDocumentoDoPedido } from "@/app/admin/acoes-conteudos";
 import { formatDateTime } from "@/lib/dates";
 import BotaoAccao from "./BotaoAccao";
-import CarregarFicheiro from "./CarregarFicheiro";
 import FormularioAccao from "./FormularioAccao";
 
 export type DocumentoDoPedido = {
@@ -39,28 +38,35 @@ export default function DocumentosDoPedido({
 }) {
   return (
     <section id="documentos" className={`cartao scroll-mt-24 p-5 ${faltaFactura ? "border-l-2 border-l-ouro" : ""}`}>
-      <h2 className="font-display text-lg">Documentos</h2>
+      <h2 className="font-display text-lg">Factura do CEGID</h2>
       <p className="mt-1 text-sm text-tinta-70">
-        Factura do CEGID, comprovativos e outros papéis. A cliente vê-os na página do pedido dela.
+        Registe o número da factura emitida no CEGID. A cliente vê-o na página do pedido dela.
       </p>
       {faltaFactura && (
         <p className="mt-3 text-sm text-ouro-escuro">
-          Este pedido já está a ser finalizado: anexe a factura do CEGID com o número, para a cliente a poder guardar.
+          Este pedido já está a ser finalizado: registe o número da factura do CEGID.
         </p>
       )}
 
       {documentos.length === 0 ? (
-        <p className="mt-4 text-sm text-tinta-50">Ainda sem documentos.</p>
+        <p className="mt-4 text-sm text-tinta-50">Ainda sem factura registada.</p>
       ) : (
         <ul className="mt-4 divide-y divide-marfim-200">
           {documentos.map((d) => (
             <li key={d.id} className="flex flex-wrap items-center gap-3 py-3">
               <FileText className="h-4 w-4 shrink-0 text-ouro-escuro" strokeWidth={1.6} aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <a href={d.url} target="_blank" rel="noreferrer" className="block truncate text-sm text-ouro-escuro hover:underline">
-                  {NOME_DA_ESPECIE[d.kind] ?? d.kind}
-                  {d.reference ? ` ${d.reference}` : ""}
-                </a>
+                {d.url ? (
+                  <a href={d.url} target="_blank" rel="noreferrer" className="block truncate text-sm text-ouro-escuro hover:underline">
+                    {NOME_DA_ESPECIE[d.kind] ?? d.kind}
+                    {d.reference ? ` ${d.reference}` : ""}
+                  </a>
+                ) : (
+                  <span className="num block truncate text-sm">
+                    {NOME_DA_ESPECIE[d.kind] ?? d.kind}
+                    {d.reference ? ` ${d.reference}` : ""}
+                  </span>
+                )}
                 <span className="block text-xs text-tinta-50">
                   {formatDateTime(d.createdAt)}
                   {d.quem ? ` · ${d.quem}` : ""}
@@ -80,33 +86,20 @@ export default function DocumentosDoPedido({
       {podeEditar && (
         <FormularioAccao
           acao={guardarDocumentoDoPedido}
-          textoBotao="Anexar"
+          textoBotao="Registar factura"
           limpar
           botaoClassName="btn btn-contorno"
           className="mt-5 space-y-4 border-t border-marfim-200 pt-5"
         >
           <input type="hidden" name="orderId" value={orderId} />
-          <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
-            <label>
-              <span className="etiqueta">Tipo</span>
-              <select name="kind" className="campo" defaultValue="FACTURA">
-                <option value="FACTURA">Factura</option>
-                <option value="COMPROVATIVO">Comprovativo</option>
-                <option value="OUTRO">Outro</option>
-              </select>
-            </label>
+          <input type="hidden" name="kind" value="FACTURA" />
+          <input type="hidden" name="url" value="" />
+          <div className="grid gap-4 sm:grid-cols-[1fr_1fr]">
             <label>
               <span className="etiqueta">Número da factura (CEGID)</span>
-              <input name="reference" className="campo" placeholder="FT 2026/123" maxLength={60} />
+              <input name="reference" className="campo num" placeholder="FT 2026/123" maxLength={60} required />
             </label>
-            <label className="sm:col-span-2">
-              <span className="etiqueta">Ficheiro (PDF ou imagem)</span>
-              <input name="url" className="campo" placeholder="https://… ou carregue o ficheiro" required />
-              <span className="mt-2 block">
-                <CarregarFicheiro area="pedidos" campo="url" aceita="application/pdf,image/*" texto="Carregar documento" />
-              </span>
-            </label>
-            <label className="sm:col-span-2">
+            <label>
               <span className="etiqueta">Nota (opcional)</span>
               <input name="note" className="campo" maxLength={300} />
             </label>

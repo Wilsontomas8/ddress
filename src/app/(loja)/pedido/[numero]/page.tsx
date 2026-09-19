@@ -247,10 +247,17 @@ export default async function PaginaPedido({
             <ul className="mt-3 space-y-2 text-sm">
               {documentos.map((d) => (
                 <li key={d.id} className="flex flex-wrap items-baseline gap-2">
-                  <a href={d.url} target="_blank" rel="noreferrer" className="ligacao">
-                    {d.kind === "FACTURA" ? "Factura" : d.kind === "COMPROVATIVO" ? "Comprovativo" : "Documento"}
-                    {d.reference ? ` ${d.reference}` : ""}
-                  </a>
+                  {d.url ? (
+                    <a href={d.url} target="_blank" rel="noreferrer" className="ligacao">
+                      {d.kind === "FACTURA" ? "Factura" : d.kind === "COMPROVATIVO" ? "Comprovativo" : "Documento"}
+                      {d.reference ? ` ${d.reference}` : ""}
+                    </a>
+                  ) : (
+                    <span className="num">
+                      {d.kind === "FACTURA" ? "Factura" : "Documento"}
+                      {d.reference ? ` ${d.reference}` : ""}
+                    </span>
+                  )}
                   <span className="text-xs text-tinta-50">{formatNumericDate(d.createdAt)}</span>
                 </li>
               ))}

@@ -3,8 +3,9 @@
  *
  *   node scripts/e2e-ficheiros.mjs [url]
  *
- * A equipa carrega uma factura num pedido, a cliente vê-a na página do
- * pedido dela, e o relatório do mês abre em folha pronta a imprimir.
+ * A equipa carrega a fotografia de uma peça, regista o número da factura
+ * do CEGID num pedido (a cliente vê-o na página do pedido dela) e o
+ * relatório do mês abre em folha pronta a imprimir.
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -35,10 +36,14 @@ async function hidratado(pagina, seletor) {
 }
 
 const navegador = await abrirNavegador();
-const pdf = path.join(TIROS, "factura-de-teste.pdf");
+// PNG de 1×1 píxel, para testar o carregamento de fotografias
+const foto = path.join(TIROS, "foto-de-teste.png");
 writeFileSync(
-  pdf,
-  "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n",
+  foto,
+  Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64",
+  ),
 );
 
 try {
@@ -54,7 +59,17 @@ try {
   await pagina.getByLabel("E-mail", { exact: true }).fill("admin@ddress.ao");
   await pagina.getByLabel("Palavra-passe").fill("admin123");
   await pagina.getByRole("button", { name: "Entrar" }).click();
-  await pagina.waitForURL("**/admin**", { timeout: 45000 });
+  await pagina.waitForURL("**/admin**", { timeout: 120000 });
+
+  // ------------------------------------------------ fotografia de uma peça
+  await pagina.goto(`${BASE}/admin/produtos`, { waitUntil: "domcontentloaded" });
+  await pagina.locator('tbody a[href^="/admin/produtos/"]').first().click();
+  await pagina.waitForURL(/\/admin\/produtos\/[^/]+$/, { timeout: 90000 });
+  await hidratado(pagina, "main");
+  await pagina.locator('input[type="file"]').first().setInputFiles(foto);
+  await pagina.getByText("Carregado.").first().waitFor({ timeout: 60000 });
+  const endereco = await pagina.locator('input[name="imagem"]').inputValue();
+  passo("Fotografia carregada pelo painel", endereco.includes("/"), endereco);
 
   // ------------------------------------------------ factura num pedido
   await pagina.goto(`${BASE}/admin/pedidos`, { waitUntil: "domcontentloaded" });
@@ -68,19 +83,11 @@ try {
     "",
   );
 
-  await pagina.locator('input[type="file"]').first().setInputFiles(pdf);
-  await pagina.getByText("Carregado.").first().waitFor({ timeout: 60000 });
-  const endereco = await pagina
-    .locator('input[name="url"]')
-    .first()
-    .inputValue();
-  passo("Ficheiro carregado pelo painel", endereco.length > 0, endereco);
-
   const referencia = `FT 2026/${Date.now().toString().slice(-4)}`;
   await pagina.locator('input[name="reference"]').fill(referencia);
-  await pagina.getByRole("button", { name: "Anexar" }).click();
-  await pagina.getByText("Documento anexado.").waitFor({ timeout: 45000 });
-  passo("Factura anexada ao pedido", true);
+  await pagina.getByRole("button", { name: "Registar factura" }).click();
+  await pagina.getByText("Factura registada.").waitFor({ timeout: 45000 });
+  passo("Número da factura do CEGID registado no pedido", true, referencia);
   await pagina.screenshot({
     path: `${TIROS}/ficheiros-pedido-admin.png`,
     fullPage: true,
@@ -98,7 +105,7 @@ try {
   passo(
     "Cliente vê a factura no seu pedido",
     await site
-      .getByRole("link", { name: `Factura ${referencia}` })
+      .getByText(`Factura ${referencia}`)
       .first()
       .isVisible(),
     numero,

@@ -524,9 +524,12 @@ export async function guardarDocumentoDoPedido(formData: FormData): Promise<Resu
         orderId: z.string().min(1),
         kind: z.enum(ESPECIES_DE_DOCUMENTO),
         reference: z.string().trim().max(60).optional(),
-        url: enderecoDeMedia,
+        // A factura do CEGID regista-se só pelo número; ficheiro é opcional
+        url: z.union([enderecoDeMedia, z.literal("")]),
         note: z.string().trim().max(300).optional(),
       })
+      .refine((d) => d.kind !== "FACTURA" || !!d.reference, { message: "Escreva o número da factura do CEGID." })
+      .refine((d) => d.kind === "FACTURA" || !!d.url, { message: "Indique o ficheiro do documento." })
       .parse({
         orderId: texto(formData.get("orderId")),
         kind: (texto(formData.get("kind")) || "FACTURA") as (typeof ESPECIES_DE_DOCUMENTO)[number],
@@ -552,12 +555,12 @@ export async function guardarDocumentoDoPedido(formData: FormData): Promise<Resu
       orderId: dados.orderId,
       actorId: eu.id,
       type: "DOCUMENTO",
-      message: `${eu.name} anexou ${dados.kind === "FACTURA" ? "a factura" : dados.kind === "COMPROVATIVO" ? "um comprovativo" : "um documento"}${dados.reference ? ` ${dados.reference}` : ""}.`,
+      message: `${eu.name} registou ${dados.kind === "FACTURA" ? "a factura" : dados.kind === "COMPROVATIVO" ? "um comprovativo" : "um documento"}${dados.reference ? ` ${dados.reference}` : ""}.`,
     });
 
     revalidatePath(`/admin/pedidos/${dados.orderId}`);
     revalidatePath(`/pedido/${pedido.number}`);
-    return { ok: true, mensagem: "Documento anexado." };
+    return { ok: true, mensagem: dados.kind === "FACTURA" ? "Factura registada." : "Documento anexado." };
   } catch (e) {
     return falha(e);
   }

@@ -140,10 +140,10 @@ houver slides guardados, o site usa os textos instalados em
 O painel carrega fotografias, vídeos e PDF (limites: 8 MB imagem, 60 MB vídeo,
 12 MB documento). Com `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` definidos,
 os ficheiros vão para o Supabase Storage (bucket `ddress`, público); no
-computador ficam em `public/carregados`. A factura do CEGID anexa-se ao
-pedido em *Painel → Pedidos → (pedido) → Documentos*, no acto da finalização —
-a partir de “Pago” o painel avisa enquanto ela faltar — e a cliente vê-a na
-página do pedido dela. O relatório mensal tem versão em folha A4:
+computador ficam em `public/carregados`. A factura do CEGID regista-se só pelo **número**, na
+ficha do pedido, no acto da finalização — a partir de “Pago” o painel avisa enquanto
+faltar — e a cliente vê o número na página do pedido dela. As fotografias vão para o
+Supabase Storage. O relatório mensal tem versão em folha A4:
 *Painel → Relatórios → Imprimir / PDF*.
 
 ### Contas
