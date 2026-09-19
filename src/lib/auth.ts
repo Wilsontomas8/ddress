@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { db, ehBaseEmbutida } from "@/db";
+import { db, ehBaseEmbutida, urlDaBase } from "@/db";
 import { users, type Role } from "@/db/schema";
 import { ehPerfilDeEquipa, podeEditarNa, podeVerNa, type Nivel, type Seccao } from "./permissoes";
 import { matrizDoPerfil } from "./permissoes-servidor";
@@ -26,9 +26,14 @@ const SEGREDO_DE_DESENVOLVIMENTO = "ddress-desenvolvimento-local-nao-usar-em-pro
  */
 function segredo(): Uint8Array {
   const supabase = process.env.SUPABASE_JWT_SECRET;
+  // Sem AUTH_SECRET nem a chave JWT do Supabase, a própria ligação à base
+  // (que tem a palavra-passe e só existe no servidor) serve de segredo.
+  const ligacao = ehBaseEmbutida() ? undefined : urlDaBase();
+  const derivar = (base: string) => createHmac("sha256", base).update("ddress-sessoes-v1").digest("base64");
   const s =
     process.env.AUTH_SECRET ||
-    (supabase ? createHmac("sha256", supabase).update("ddress-sessoes-v1").digest("base64") : undefined) ||
+    (supabase ? derivar(supabase) : undefined) ||
+    (ligacao ? derivar(ligacao) : undefined) ||
     (process.env.NODE_ENV !== "production" || ehBaseEmbutida() ? SEGREDO_DE_DESENVOLVIMENTO : undefined);
   if (!s || s.length < 16) {
     throw new Error(
