@@ -590,7 +590,9 @@ export async function semear(
   const clienteId = uid();
   const cliente2Id = uid();
 
-  await db.insert(users).values([
+  // Numa base real só entra a conta do administrador: nada de equipa nem
+  // clientes fictícios. As outras contas existem só na demonstração.
+  const contas: (typeof users.$inferInsert)[] = [
     {
       id: adminId,
       name: "Administrador DDRESS",
@@ -657,7 +659,8 @@ export async function semear(
       passwordHash: hash("cliente123"),
       role: "CLIENTE",
     },
-  ]);
+  ];
+  await db.insert(users).values(publica ? contas.slice(0, 1) : contas);
 
   // ---------------------------------------------------------- categorias
   avisar("Categorias e produtos...");
@@ -727,6 +730,17 @@ export async function semear(
   // ------------------------------- conteúdos, colecções e parceiros
   avisar("Quem somos, colecções, parceira de maquilhagem e sapatos sugeridos...");
   await semearConteudos(db, varianteIds);
+
+  if (publica) {
+    // Base real: catálogo, conteúdos, definições e o administrador. Sem
+    // pedidos, marcações nem histórico inventados — os relatórios começam
+    // limpos com as vendas verdadeiras.
+    avisar("");
+    avisar("  Pronto: catálogo, colecções, Quem somos, página inicial e definições.");
+    avisar("  Administrador: atendimentoddress@gmail.com — defina a palavra-passe em /recuperar.");
+    avisar("");
+    return;
+  }
 
   // --------------------------------------------- histórico (6 meses)
   avisar("Histórico de vendas e alugueres dos últimos meses...");
